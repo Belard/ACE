@@ -15,16 +15,18 @@ typedef struct {
 
   // tes - time entering state
   // tis - time in state
+  // tis_pause - time in state (save while in pause)
   unsigned long tes, tis, tis_pause;
 } fsm_t;
 
 // Input variables
 uint8_t S1, prevS1;
 uint8_t S2, prevS2;
-uint8_t S3, prevS3;
-uint8_t S4, prevS4;
-uint8_t S5, prevS5;
-uint8_t S6, prevS6;
+
+uint8_t S1_real, S2_real;
+
+uint8_t S1_gate = 0;
+uint8_t S2_gate = 0;
 
 int end_cycle = 0;
 
@@ -34,7 +36,7 @@ int pause = 0;
 uint8_t LED_1, LED_2, LED_3, LED_4, LED_5, LED_6, LED_7;
 
 // Our finite state machines
-fsm_t fsm1, fsm2, fsm3, fsm4, fsm5, fsm6, fsm7;
+fsm_t fsm1, fsm2, fsm3, fsm4, fsm5, fsm6, fsm7, sw1, sw2;
 
 unsigned long interval, last_cycle;
 unsigned long loop_micros;
@@ -60,6 +62,19 @@ void set_led(fsm_t& fsm, uint8_t* LED)
   }
 }
 
+int check_switch(uint8_t S, uint8_t S_real, fsm_t& fsm) {
+  if (S_real && S) {return 0;}
+  if (!S_real && !S) {return 0;}
+  if (S_real && !S && fsm.tis > 500) {
+    fsm.tes = millis();
+    fsm.tis = 0;
+    return 1;
+  }
+  if (!S_real && S) {return 0;}
+
+  return 0;
+}
+
 void setup() 
 {
   pinMode(LED1_pin, OUTPUT);
@@ -74,6 +89,11 @@ void setup()
 
   // Start the serial port with 115200 baudrate
   Serial.begin(115200);
+
+  sw1.tes = millis();
+  sw1.tis = 0;
+  sw1.tes = millis();  
+  sw2.tis = 501;
 
   interval = 10;
   set_state(fsm1, 0);
@@ -98,19 +118,19 @@ void loop()
       last_cycle = now;
       
       // Read the inputs
+      unsigned long cur_time = millis();   // Just one call to millis()
+      sw1.tis = cur_time - sw1.tes;
+      sw2.tis = cur_time - sw2.tes;
       prevS1 = S1;
       prevS2 = S2;
-      prevS3 = S3;
-      prevS4 = S4;
-      prevS5 = S5;
-      prevS6 = S6;      
-      S1 = !digitalRead(S1_pin);
-      S2 = !digitalRead(S2_pin);
+      S1_real = !digitalRead(S1_pin);
+      S2_real = !digitalRead(S2_pin);
+      S1 = check_switch(S1, S1_real, sw1);
+      S2 = check_switch(S2, S2_real, sw2);
 
       // FSM processing
 
       // Update tis for all state machines
-      unsigned long cur_time = millis();   // Just one call to millis()
       fsm1.tis = cur_time - fsm1.tes;
       fsm2.tis = cur_time - fsm2.tes;
       fsm3.tis = cur_time - fsm3.tes;
@@ -123,17 +143,22 @@ void loop()
         fsm1.new_state = 1;
       } else if(fsm1.state == 1 && S1) {
         fsm1.tes = millis();
-      // } else if(fsm1.state == 1 && S2) {
-      //   fsm1.tis_pause = fsm1.tis_pause;
-      //   pause = 1;
+      } else if(fsm1.state == 1 && S2) {
+        fsm1.tis_pause = fsm1.tis;
+        pause = 1;
       } else if (fsm1.state == 1 && fsm1.tis > 2000) {
         fsm1.new_state = 2;
-//      } else if (fsm1.state == 1 && fsm1.tis > 1000 && pause) {
-//        fsm1.new_state = 2;
-      //} else if (fsm1.state == 1 && S2 && pause){
-        //fsm1.new_state = 2;
-      // } else if (fsm1.state == 2 && fsm1.tis > 1000 && pause) {
-      //   fsm1.new_state = 1;
+      } else if (fsm1.state == 1 && fsm1.tis > 1000 && pause) {
+        fsm1.new_state = 2;
+      } else if (fsm1.state == 1 && S2 && pause){
+        fsm1.tes = cur_time - fsm1.tis_pause;
+        pause = 0;
+      } else if (fsm1.state == 2 && fsm1.tis > 1000 && pause) {
+        fsm1.new_state = 1;
+      } else if (fsm1.state == 2 && S2 && pause){
+        fsm1.state = 2;
+        fsm1.tes = cur_time - fsm1.tis_pause;
+        pause = 0;
       } else if (fsm1.state == 2 && end_cycle) {
         fsm1.new_state = 1;
       } else if (fsm1.state == 2 && S1){
@@ -144,10 +169,22 @@ void loop()
         fsm2.new_state = 1;
       } else if(fsm2.state == 1 && S1) {
         fsm2.tes = millis();
+      } else if(fsm2.state == 1 && S2) {
+        fsm2.tis_pause = fsm2.tis;
+        pause = 1;
       } else if (fsm2.state == 1 && fsm2.tis > 4000){
         fsm2.new_state = 2;
-      Serial.print("\n fsm2.new_state: \n");
-      Serial.print(fsm2.new_state);
+      } else if (fsm2.state == 1 && fsm2.tis > 1000 && pause) {
+        fsm2.new_state = 2;
+      } else if (fsm2.state == 1 && S2 && pause){
+        fsm2.tes = cur_time - fsm2.tis_pause;
+        pause = 0;
+      } else if (fsm2.state == 2 && fsm2.tis > 1000 && pause) {
+        fsm2.new_state = 1;
+      } else if (fsm2.state == 2 && S2 && pause){
+        fsm2.state = 2;
+        fsm2.tes = cur_time - fsm2.tis_pause;
+        pause = 0;
       } else if (fsm2.state == 2 && end_cycle){
         fsm2.new_state = 1;
       } else if (fsm2.state == 2 && S1){
@@ -158,8 +195,22 @@ void loop()
         fsm3.new_state = 1;
       } else if(fsm3.state == 1 && S1) {
         fsm3.tes = millis();
+      } else if(fsm3.state == 1 && S2) {
+        fsm3.tis_pause = fsm3.tis;
+        pause = 1;
       } else if (fsm3.state == 1 && fsm3.tis > 6000){
         fsm3.new_state = 2;
+      } else if (fsm3.state == 1 && fsm3.tis > 1000 && pause) {
+        fsm3.new_state = 2;
+      } else if (fsm3.state == 1 && S2 && pause){
+        fsm3.tes = cur_time - fsm3.tis_pause;
+        pause = 0;
+      } else if (fsm3.state == 2 && fsm3.tis > 1000 && pause) {
+        fsm3.new_state = 1;
+      } else if (fsm3.state == 2 && S2 && pause){
+        fsm3.state = 2;
+        fsm3.tes = cur_time - fsm3.tis_pause;
+        pause = 0;
       } else if (fsm3.state == 2 && end_cycle){
         fsm3.new_state = 1;
       } else if (fsm3.state == 2 && S1){
@@ -170,8 +221,22 @@ void loop()
         fsm4.new_state = 1;
       } else if(fsm4.state == 1 && S1) {
         fsm4.tes = millis();
+      } else if(fsm4.state == 1 && S2) {
+        fsm4.tis_pause = fsm4.tis;
+        pause = 1;
       } else if (fsm4.state == 1 && fsm4.tis > 8000){
         fsm4.new_state = 2;
+      } else if (fsm4.state == 1 && fsm4.tis > 1000 && pause) {
+        fsm4.new_state = 2;
+      } else if (fsm4.state == 1 && S2 && pause){
+        fsm4.tes = cur_time - fsm4.tis_pause;
+        pause = 0;
+      } else if (fsm4.state == 2 && fsm4.tis > 1000 && pause) {
+        fsm4.new_state = 1;
+      } else if (fsm4.state == 2 && S2 && pause){
+        fsm4.state = 2;
+        fsm4.tes = cur_time - fsm4.tis_pause;
+        pause = 0;
       } else if (fsm4.state == 2 && end_cycle){
         fsm4.new_state = 1;
       } else if (fsm4.state == 2 && S1){
@@ -182,8 +247,22 @@ void loop()
         fsm5.new_state = 1;
       } else if(fsm5.state == 1 && S1) {
         fsm5.tes = millis();
+      } else if(fsm5.state == 1 && S2) {
+        fsm5.tis_pause = fsm5.tis;
+        pause = 1;
       } else if (fsm5.state == 1 && fsm5.tis > 10000){
         fsm5.new_state = 2;
+      } else if (fsm5.state == 1 && fsm5.tis > 1000 && pause) {
+        fsm5.new_state = 2;
+      } else if (fsm5.state == 1 && S2 && pause){
+        fsm5.tes = cur_time - fsm5.tis_pause;
+        pause = 0;
+      } else if (fsm5.state == 2 && fsm5.tis > 1000 && pause) {
+        fsm5.new_state = 1;
+      } else if (fsm5.state == 2 && S2 && pause){
+        fsm5.state = 2;
+        fsm5.tes = cur_time - fsm5.tis_pause;
+        pause = 0;
       } else if (fsm5.state == 2 && end_cycle){
         fsm5.new_state = 1;
       } else if (fsm5.state == 2 && S1){
@@ -194,9 +273,23 @@ void loop()
         fsm6.new_state = 1;
       } else if(fsm6.state == 1 && S1) {
         fsm6.tes = 0;
+      } else if(fsm6.state == 1 && S2) {
+        fsm6.tis_pause = fsm6.tis;
+        pause = 1;
       } else if (fsm6.state == 1 && fsm6.tis > 12000) {
         fsm6.new_state = 2;
         end_cycle = 1;
+      } else if (fsm6.state == 1 && fsm6.tis > 1000 && pause) {
+        fsm6.new_state = 2;
+      } else if (fsm6.state == 1 && S2 && pause){
+        fsm6.tes = cur_time - fsm6.tis_pause;
+        pause = 0;
+      } else if (fsm6.state == 2 && fsm6.tis > 1000 && pause) {
+        fsm6.new_state = 1;
+      } else if (fsm6.state == 2 && S2 && pause){
+        fsm6.state = 2;
+        fsm6.tes = cur_time - fsm6.tis_pause;
+        pause = 0;
       } else if (fsm6.state == 2 && end_cycle) {
         fsm6.new_state = 1;
         end_cycle = 0;
@@ -256,9 +349,6 @@ void loop()
 
       Serial.print(" fsm2.state: ");
       Serial.print(fsm2.state);
-
-      Serial.print(" fsm2.new_state: ");
-      Serial.print(fsm2.new_state);
 
       Serial.print(" fsm3.state: ");
       Serial.print(fsm3.state);
