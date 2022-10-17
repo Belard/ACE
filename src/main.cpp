@@ -42,21 +42,21 @@ unsigned long loop_micros;
 // Set new state
 void set_state(fsm_t& fsm, int new_state)
 {
-  if (fsm.state != new_state) {  // if the state chnanged tis is reset
+  if (fsm.state != new_state) {  // if the state changed tis is reset
     fsm.state = new_state;
     fsm.tes = millis();
     fsm.tis = 0;
   }
 }
 
-void set_led(fsm_t& fsm, int LED)
+void set_led(fsm_t& fsm, uint8_t* LED)
 {
   if (fsm.state == 0){
-    LED = 0;
+    *LED = 0;
   } else if (fsm.state == 1){
-    LED = 1;
+    *LED = 1;
   } else if (fsm.state == 2){
-    LED = 0;
+    *LED = 0;
   }
 }
 
@@ -112,24 +112,28 @@ void loop()
       // Update tis for all state machines
       unsigned long cur_time = millis();   // Just one call to millis()
       fsm1.tis = cur_time - fsm1.tes;
-      fsm2.tis = cur_time - fsm2.tes; 
+      fsm2.tis = cur_time - fsm2.tes;
+      fsm3.tis = cur_time - fsm3.tes;
+      fsm4.tis = cur_time - fsm4.tes; 
+      fsm5.tis = cur_time - fsm5.tes;
+      fsm6.tis = cur_time - fsm6.tes;  
 
       // Calculate next state for the first state machine
-      if (fsm1.state == 0 && (S1 || S2)){
+      if (fsm1.state == 0 && (S1 || S2)) {
         fsm1.new_state = 1;
       } else if(fsm1.state == 1 && S1) {
         fsm1.tes = millis();
-      } else if(fsm1.state == 1 && S2) {
-        fsm1.tis_pause = fsm1.tis_pause;
-        pause = 1;
-      } else if (fsm1.state == 1 && fsm1.tis > 2000){
+      // } else if(fsm1.state == 1 && S2) {
+      //   fsm1.tis_pause = fsm1.tis_pause;
+      //   pause = 1;
+      } else if (fsm1.state == 1 && fsm1.tis > 2000) {
         fsm1.new_state = 2;
-      } else if (fsm1.state == 1 && fsm1.tis > 1000 && pause){
-        fsm1.new_state = 2;
+//      } else if (fsm1.state == 1 && fsm1.tis > 1000 && pause) {
+//        fsm1.new_state = 2;
       //} else if (fsm1.state == 1 && S2 && pause){
         //fsm1.new_state = 2;
-      } else if (fsm1.state == 2 && fsm1.tis > 1000 && pause){
-        fsm1.new_state = 1;
+      // } else if (fsm1.state == 2 && fsm1.tis > 1000 && pause) {
+      //   fsm1.new_state = 1;
       } else if (fsm1.state == 2 && end_cycle) {
         fsm1.new_state = 1;
       } else if (fsm1.state == 2 && S1){
@@ -139,9 +143,11 @@ void loop()
       if (fsm2.state == 0 && (S1 || S2)){
         fsm2.new_state = 1;
       } else if(fsm2.state == 1 && S1) {
-        fsm2.new_state = millis();
+        fsm2.tes = millis();
       } else if (fsm2.state == 1 && fsm2.tis > 4000){
         fsm2.new_state = 2;
+      Serial.print("\n fsm2.new_state: \n");
+      Serial.print(fsm2.new_state);
       } else if (fsm2.state == 2 && end_cycle){
         fsm2.new_state = 1;
       } else if (fsm2.state == 2 && S1){
@@ -151,7 +157,7 @@ void loop()
       if (fsm3.state == 0 && (S1 || S2)){
         fsm3.new_state = 1;
       } else if(fsm3.state == 1 && S1) {
-        fsm3.new_state = millis();
+        fsm3.tes = millis();
       } else if (fsm3.state == 1 && fsm3.tis > 6000){
         fsm3.new_state = 2;
       } else if (fsm3.state == 2 && end_cycle){
@@ -163,7 +169,7 @@ void loop()
       if (fsm4.state == 0 && (S1 || S2)){
         fsm4.new_state = 1;
       } else if(fsm4.state == 1 && S1) {
-        fsm4.new_state = millis();
+        fsm4.tes = millis();
       } else if (fsm4.state == 1 && fsm4.tis > 8000){
         fsm4.new_state = 2;
       } else if (fsm4.state == 2 && end_cycle){
@@ -175,7 +181,7 @@ void loop()
       if (fsm5.state == 0 && (S1 || S2)){
         fsm5.new_state = 1;
       } else if(fsm5.state == 1 && S1) {
-        fsm5.new_state = millis();
+        fsm5.tes = millis();
       } else if (fsm5.state == 1 && fsm5.tis > 10000){
         fsm5.new_state = 2;
       } else if (fsm5.state == 2 && end_cycle){
@@ -187,11 +193,13 @@ void loop()
       if (fsm6.state == 0 && (S1 || S2)){
         fsm6.new_state = 1;
       } else if(fsm6.state == 1 && S1) {
-        fsm6.new_state = 0;
-      } else if (fsm6.state == 1 && fsm6.tis > 20000){
+        fsm6.tes = 0;
+      } else if (fsm6.state == 1 && fsm6.tis > 12000) {
         fsm6.new_state = 2;
-      } else if (fsm6.state == 2 && end_cycle){
+        end_cycle = 1;
+      } else if (fsm6.state == 2 && end_cycle) {
         fsm6.new_state = 1;
+        end_cycle = 0;
       } else if (fsm6.state == 2 && S1){
         fsm6.new_state = 1;
       }
@@ -203,6 +211,8 @@ void loop()
         fsm2.new_state = 0;
       }*/
 
+
+
       // Update the states
       set_state(fsm1, fsm1.new_state);
       set_state(fsm2, fsm2.new_state);
@@ -212,12 +222,12 @@ void loop()
       set_state(fsm6, fsm6.new_state);
 
       // Actions set by the current state of the first state machine
-      set_led(fsm1, LED_1);
-      set_led(fsm2, LED_2);
-      set_led(fsm3, LED_3);
-      set_led(fsm4, LED_4);
-      set_led(fsm5, LED_5);
-      set_led(fsm6, LED_6);
+      set_led(fsm1, &LED_1);
+      set_led(fsm2, &LED_2);
+      set_led(fsm3, &LED_3);
+      set_led(fsm4, &LED_4);
+      set_led(fsm5, &LED_5);
+      set_led(fsm6, &LED_6);
 
       // A more compact way
       // LED_1 = (fsm1.state == 1);
@@ -244,11 +254,41 @@ void loop()
       Serial.print(" fsm1.state: ");
       Serial.print(fsm1.state);
 
+      Serial.print(" fsm2.state: ");
+      Serial.print(fsm2.state);
+
+      Serial.print(" fsm2.new_state: ");
+      Serial.print(fsm2.new_state);
+
+      Serial.print(" fsm3.state: ");
+      Serial.print(fsm3.state);
+
+      Serial.print(" fsm4.state: ");
+      Serial.print(fsm4.state);
+
+      Serial.print(" fsm5.state: ");
+      Serial.print(fsm5.state);
+
+      Serial.print(" fsm6.state: ");
+      Serial.print(fsm6.state);      
+
       Serial.print(" LED_1: ");
       Serial.print(LED_1);
 
       Serial.print(" LED_2: ");
       Serial.print(LED_2);
+
+      Serial.print(" LED_3: ");
+      Serial.print(LED_3);
+
+      Serial.print(" LED_4: ");
+      Serial.print(LED_4);
+
+      Serial.print(" LED_5: ");
+      Serial.print(LED_5);
+
+      Serial.print(" LED_6: ");
+      Serial.print(LED_6);
 
       Serial.print(" loop: ");
       Serial.println(micros() - loop_micros);
