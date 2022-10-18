@@ -45,35 +45,42 @@ unsigned long loop_micros;
 void set_state(fsm_t& fsm, int new_state)
 {
   if (fsm.state != new_state) {  // if the state changed tis is reset
-    fsm.state = new_state;
-    fsm.tes = millis();
-    fsm.tis = 0;
+      if (fsm.state == 3) {
+        fsm.state = new_state;
+   
+      } else {
+        fsm.state = new_state;
+        fsm.tes = millis();
+        fsm.tis = 0;
+      }
   }
 }
 
 void set_led(fsm_t& fsm, uint8_t* LED)
 {
-  if (fsm.state == 0){
+  if (fsm.state == 0) { // Start state
     *LED = 0;
-  } else if (fsm.state == 1){
+  } else if (fsm.state == 1) { // Led ON state
     *LED = 1;
-  } else if (fsm.state == 2){
+  } else if (fsm.state == 2) { // Led OFF while counting state
+    *LED = 0;
+  } else if (fsm.state == 3) { // Led OFF while paused state
     *LED = 0;
   }
 }
 
-int check_switch(uint8_t S, uint8_t S_real, fsm_t& fsm) {
-  if (S_real && S) {return 0;}
-  if (!S_real && !S) {return 0;}
-  if (S_real && !S && fsm.tis > 500) {
-    fsm.tes = millis();
-    fsm.tis = 0;
-    return 1;
-  }
-  if (!S_real && S) {return 0;}
+// int check_switch(uint8_t S, uint8_t S_real, fsm_t& fsm) {
+//   if (S_real && S) {return 0;}
+//   if (!S_real && !S) {return 0;}
+//   if (S_real && !S && fsm.tis > 500) {
+//     fsm.tes = millis();
+//     fsm.tis = 0;
+//     return 1;
+//   }
+//   if (!S_real && S) {return 0;}
 
-  return 0;
-}
+//   return 0;
+// }
 
 void setup() 
 {
@@ -118,19 +125,23 @@ void loop()
       last_cycle = now;
       
       // Read the inputs
-      unsigned long cur_time = millis();   // Just one call to millis()
-      sw1.tis = cur_time - sw1.tes;
-      sw2.tis = cur_time - sw2.tes;
+      // sw1.tis = cur_time - sw1.tes;
+      // sw2.tis = cur_time - sw2.tes;
       prevS1 = S1;
       prevS2 = S2;
-      S1_real = !digitalRead(S1_pin);
-      S2_real = !digitalRead(S2_pin);
-      S1 = check_switch(S1, S1_real, sw1);
-      S2 = check_switch(S2, S2_real, sw2);
+      // S1_real = !digitalRead(S1_pin);
+      // S2_real = !digitalRead(S2_pin);
+      // S1 = check_switch(S1, S1_real, sw1);
+      // S2 = check_switch(S2, S2_real, sw2);
+
+      S1 = !digitalRead(S1_pin);
+      S2 = !digitalRead(S2_pin);
+
 
       // FSM processing
 
       // Update tis for all state machines
+      unsigned long cur_time = millis();   // Just one call to millis()
       fsm1.tis = cur_time - fsm1.tes;
       fsm2.tis = cur_time - fsm2.tes;
       fsm3.tis = cur_time - fsm3.tes;
@@ -141,139 +152,139 @@ void loop()
       // Calculate next state for the first state machine
       if (fsm1.state == 0 && (S1 || S2)) {
         fsm1.new_state = 1;
-      } else if(fsm1.state == 1 && S1) {
+      } else if(fsm1.state == 1 && S1 && !prevS1) {
         fsm1.tes = millis();
-      } else if(fsm1.state == 1 && S2) {
+      } else if(fsm1.state == 1 && S2 && !prevS2) {
         fsm1.tis_pause = fsm1.tis;
         pause = 1;
       } else if (fsm1.state == 1 && fsm1.tis > 2000) {
         fsm1.new_state = 2;
       } else if (fsm1.state == 1 && fsm1.tis > 1000 && pause) {
         fsm1.new_state = 2;
-      } else if (fsm1.state == 1 && S2 && pause){
+      } else if (fsm1.state == 1 && S2 && !prevS2 && pause){
         fsm1.tes = cur_time - fsm1.tis_pause;
         pause = 0;
       } else if (fsm1.state == 2 && fsm1.tis > 1000 && pause) {
         fsm1.new_state = 1;
-      } else if (fsm1.state == 2 && S2 && pause){
+      } else if (fsm1.state == 2 && S2 && !prevS2 && pause){
         fsm1.state = 2;
         fsm1.tes = cur_time - fsm1.tis_pause;
         pause = 0;
       } else if (fsm1.state == 2 && end_cycle) {
         fsm1.new_state = 1;
-      } else if (fsm1.state == 2 && S1){
+      } else if (fsm1.state == 2 && S1 && !prevS1){
         fsm1.new_state = 1;
       }
 
       if (fsm2.state == 0 && (S1 || S2)){
         fsm2.new_state = 1;
-      } else if(fsm2.state == 1 && S1) {
+      } else if(fsm2.state == 1 && S1 && !prevS1) {
         fsm2.tes = millis();
-      } else if(fsm2.state == 1 && S2) {
+      } else if(fsm2.state == 1 && S2 && !prevS2) {
         fsm2.tis_pause = fsm2.tis;
         pause = 1;
       } else if (fsm2.state == 1 && fsm2.tis > 4000){
         fsm2.new_state = 2;
       } else if (fsm2.state == 1 && fsm2.tis > 1000 && pause) {
         fsm2.new_state = 2;
-      } else if (fsm2.state == 1 && S2 && pause){
+      } else if (fsm2.state == 1 && S2 && !prevS2 && pause){
         fsm2.tes = cur_time - fsm2.tis_pause;
         pause = 0;
       } else if (fsm2.state == 2 && fsm2.tis > 1000 && pause) {
         fsm2.new_state = 1;
-      } else if (fsm2.state == 2 && S2 && pause){
+      } else if (fsm2.state == 2 && S2 && !prevS2 && pause){
         fsm2.state = 2;
         fsm2.tes = cur_time - fsm2.tis_pause;
         pause = 0;
       } else if (fsm2.state == 2 && end_cycle){
         fsm2.new_state = 1;
-      } else if (fsm2.state == 2 && S1){
+      } else if (fsm2.state == 2 && S1 && !prevS1){
         fsm2.new_state = 1;
       }
 
       if (fsm3.state == 0 && (S1 || S2)){
         fsm3.new_state = 1;
-      } else if(fsm3.state == 1 && S1) {
+      } else if(fsm3.state == 1 && S1 && !prevS1) {
         fsm3.tes = millis();
-      } else if(fsm3.state == 1 && S2) {
+      } else if(fsm3.state == 1 && S2 && !prevS2) {
         fsm3.tis_pause = fsm3.tis;
         pause = 1;
       } else if (fsm3.state == 1 && fsm3.tis > 6000){
         fsm3.new_state = 2;
       } else if (fsm3.state == 1 && fsm3.tis > 1000 && pause) {
         fsm3.new_state = 2;
-      } else if (fsm3.state == 1 && S2 && pause){
+      } else if (fsm3.state == 1 && S2 && !prevS2 && pause){
         fsm3.tes = cur_time - fsm3.tis_pause;
         pause = 0;
       } else if (fsm3.state == 2 && fsm3.tis > 1000 && pause) {
         fsm3.new_state = 1;
-      } else if (fsm3.state == 2 && S2 && pause){
+      } else if (fsm3.state == 2 && S2 && !prevS2 && pause){
         fsm3.state = 2;
         fsm3.tes = cur_time - fsm3.tis_pause;
         pause = 0;
       } else if (fsm3.state == 2 && end_cycle){
         fsm3.new_state = 1;
-      } else if (fsm3.state == 2 && S1){
+      } else if (fsm3.state == 2 && S1 && !prevS1){
         fsm3.new_state = 1;
       }
 
       if (fsm4.state == 0 && (S1 || S2)){
         fsm4.new_state = 1;
-      } else if(fsm4.state == 1 && S1) {
+      } else if(fsm4.state == 1 && S1 && !prevS1) {
         fsm4.tes = millis();
-      } else if(fsm4.state == 1 && S2) {
+      } else if(fsm4.state == 1 && S2 && !prevS2) {
         fsm4.tis_pause = fsm4.tis;
         pause = 1;
       } else if (fsm4.state == 1 && fsm4.tis > 8000){
         fsm4.new_state = 2;
       } else if (fsm4.state == 1 && fsm4.tis > 1000 && pause) {
         fsm4.new_state = 2;
-      } else if (fsm4.state == 1 && S2 && pause){
+      } else if (fsm4.state == 1 && S2 && !prevS2 && pause){
         fsm4.tes = cur_time - fsm4.tis_pause;
         pause = 0;
       } else if (fsm4.state == 2 && fsm4.tis > 1000 && pause) {
         fsm4.new_state = 1;
-      } else if (fsm4.state == 2 && S2 && pause){
+      } else if (fsm4.state == 2 && S2 && !prevS2 && pause){
         fsm4.state = 2;
         fsm4.tes = cur_time - fsm4.tis_pause;
         pause = 0;
       } else if (fsm4.state == 2 && end_cycle){
         fsm4.new_state = 1;
-      } else if (fsm4.state == 2 && S1){
+      } else if (fsm4.state == 2 && S1 && !prevS1){
         fsm4.new_state = 1;
       }
 
       if (fsm5.state == 0 && (S1 || S2)){
         fsm5.new_state = 1;
-      } else if(fsm5.state == 1 && S1) {
+      } else if(fsm5.state == 1 && S1 && !prevS1) {
         fsm5.tes = millis();
-      } else if(fsm5.state == 1 && S2) {
+      } else if(fsm5.state == 1 && S2 && !prevS2) {
         fsm5.tis_pause = fsm5.tis;
         pause = 1;
       } else if (fsm5.state == 1 && fsm5.tis > 10000){
         fsm5.new_state = 2;
       } else if (fsm5.state == 1 && fsm5.tis > 1000 && pause) {
         fsm5.new_state = 2;
-      } else if (fsm5.state == 1 && S2 && pause){
+      } else if (fsm5.state == 1 && S2 && !prevS2 && pause){
         fsm5.tes = cur_time - fsm5.tis_pause;
         pause = 0;
       } else if (fsm5.state == 2 && fsm5.tis > 1000 && pause) {
         fsm5.new_state = 1;
-      } else if (fsm5.state == 2 && S2 && pause){
+      } else if (fsm5.state == 2 && S2 && !prevS2 && pause){
         fsm5.state = 2;
         fsm5.tes = cur_time - fsm5.tis_pause;
         pause = 0;
       } else if (fsm5.state == 2 && end_cycle){
         fsm5.new_state = 1;
-      } else if (fsm5.state == 2 && S1){
+      } else if (fsm5.state == 2 && S1 && !prevS1){
         fsm5.new_state = 1;
       }
 
       if (fsm6.state == 0 && (S1 || S2)){
         fsm6.new_state = 1;
-      } else if(fsm6.state == 1 && S1) {
+      } else if(fsm6.state == 1 && S1 && !prevS1) {
         fsm6.tes = 0;
-      } else if(fsm6.state == 1 && S2) {
+      } else if(fsm6.state == 1 && S2 && !prevS2) {
         fsm6.tis_pause = fsm6.tis;
         pause = 1;
       } else if (fsm6.state == 1 && fsm6.tis > 12000) {
@@ -281,19 +292,19 @@ void loop()
         end_cycle = 1;
       } else if (fsm6.state == 1 && fsm6.tis > 1000 && pause) {
         fsm6.new_state = 2;
-      } else if (fsm6.state == 1 && S2 && pause){
+      } else if (fsm6.state == 1 && S2 && !prevS2 && pause){
         fsm6.tes = cur_time - fsm6.tis_pause;
         pause = 0;
       } else if (fsm6.state == 2 && fsm6.tis > 1000 && pause) {
         fsm6.new_state = 1;
-      } else if (fsm6.state == 2 && S2 && pause){
+      } else if (fsm6.state == 2 && S2 && !prevS2 && pause){
         fsm6.state = 2;
         fsm6.tes = cur_time - fsm6.tis_pause;
         pause = 0;
       } else if (fsm6.state == 2 && end_cycle) {
         fsm6.new_state = 1;
         end_cycle = 0;
-      } else if (fsm6.state == 2 && S1){
+      } else if (fsm6.state == 2 && S1 && !prevS1){
         fsm6.new_state = 1;
       }
 
