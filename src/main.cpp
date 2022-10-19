@@ -26,8 +26,11 @@ uint8_t S2, prevS2;
 
 uint8_t S1_real, S2_real;
 
-uint8_t S1_gate = 0;
-uint8_t S2_gate = 0;
+uint8_t S1_doubleclick = 0;
+uint8_t S2_doubleclick = 0;
+
+uint8_t S1_doubleclick_flag = 0;
+uint8_t S2_doubleclick_flag = 0;
 
 unsigned long tis_pause = 0;
 
@@ -108,18 +111,23 @@ void set_conditions(fsm_t& fsm, uint8_t S1, uint8_t prevS1, uint8_t S2, uint8_t 
       }
 }
 
-// int check_switch(uint8_t S, uint8_t S_real, fsm_t& fsm) {
-//   if (S_real && S) {return 0;}
-//   if (!S_real && !S) {return 0;}
-//   if (S_real && !S && fsm.tis > 500) {
-//     fsm.tes = millis();
-//     fsm.tis = 0;
-//     return 1;
-//   }
-//   if (!S_real && S) {return 0;}
-
-//   return 0;
-// }
+int check_switch(uint8_t S, uint8_t prevS, fsm_t& fsm, uint8_t& S_doubleclick) {
+  if (S && !prevS && !S_doubleclick) {
+    fsm.tes = millis();
+    fsm.tis = 0;
+    S_doubleclick = 1;
+    return 1;    
+  }
+  if (S && !prevS && fsm.tis < 500 && S_doubleclick) {
+    S_doubleclick = 0;
+    return 2;    
+  }
+  if (fsm.tis > 500) {
+    S_doubleclick = 0;
+    return 0;    
+  }  
+  return 0;
+}
 
 void setup() 
 {
@@ -139,7 +147,7 @@ void setup()
   sw1.tes = millis();
   sw1.tis = 0;
   sw1.tes = millis();  
-  sw2.tis = 501;
+  sw2.tis = 0;
 
   interval = 10;
   set_state(fsm1, 0);
@@ -180,13 +188,18 @@ void loop()
 
       // Update tis for all state machines
       unsigned long cur_time = millis();   // Just one call to millis()
+      sw1.tis = cur_time - sw1.tes;
+      sw2.tis = cur_time - sw2.tes;
       fsm1.tis = cur_time - fsm1.tes;
       fsm2.tis = cur_time - fsm2.tes;
       fsm3.tis = cur_time - fsm3.tes;
       fsm4.tis = cur_time - fsm4.tes; 
       fsm5.tis = cur_time - fsm5.tes;
       fsm6.tis = cur_time - fsm6.tes;  
-      fsm7.tis = cur_time - fsm6.tes;  
+      fsm7.tis = cur_time - fsm7.tes;
+
+      S1_doubleclick = check_switch(S1, prevS1, sw1, S1_doubleclick_flag);
+      S2_doubleclick = check_switch(S2, prevS2, sw2, S2_doubleclick_flag);
 
       // Calculate next state for the first state machine
       set_conditions(fsm1, S1, prevS1, S2, prevS2, cur_time, 1);
@@ -285,28 +298,37 @@ void loop()
       Serial.print(" fsm7.state: ");
       Serial.print(fsm7.state);          
 
-      Serial.print(" LED_1: ");
-      Serial.print(LED_1);
+      // Serial.print(" LED_1: ");
+      // Serial.print(LED_1);
 
-      Serial.print(" LED_2: ");
-      Serial.print(LED_2);
+      // Serial.print(" LED_2: ");
+      // Serial.print(LED_2);
 
-      Serial.print(" LED_3: ");
-      Serial.print(LED_3);
+      // Serial.print(" LED_3: ");
+      // Serial.print(LED_3);
 
-      Serial.print(" LED_4: ");
-      Serial.print(LED_4);
+      // Serial.print(" LED_4: ");
+      // Serial.print(LED_4);
 
-      Serial.print(" LED_5: ");
-      Serial.print(LED_5);
+      // Serial.print(" LED_5: ");
+      // Serial.print(LED_5);
 
-      Serial.print(" LED_6: ");
-      Serial.print(LED_6);
+      // Serial.print(" LED_6: ");
+      // Serial.print(LED_6);
 
-      Serial.print(" LED_7: ");
-      Serial.print(LED_7);
+      // Serial.print(" LED_7: ");
+      // Serial.print(LED_7);
 
-      Serial.print(" loop2: ");
+      Serial.print(" Doubleclick: ");
+      Serial.print(S1_doubleclick);
+
+      Serial.print(" Doubleclick_flag: ");
+      Serial.print(S1_doubleclick_flag);
+
+      Serial.print(" SW1_tis: ");
+      Serial.print(sw1.tis);
+
+      Serial.print(" loop: ");
       Serial.println(micros() - loop_micros);
     }
     
