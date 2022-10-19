@@ -1,4 +1,4 @@
-#include <Arduino.h>
+#include <Arduino.h> 
 #define LED1_pin 6
 #define LED2_pin 7
 #define LED3_pin 8
@@ -11,7 +11,8 @@
 #define S2_pin 3
 
 typedef struct {
-  int state, new_state;
+  int state, new_state, pause;
+;
 
   // tes - time entering state
   // tis - time in state
@@ -28,9 +29,9 @@ uint8_t S1_real, S2_real;
 uint8_t S1_gate = 0;
 uint8_t S2_gate = 0;
 
-int end_cycle = 0;
+unsigned long tis_pause = 0;
 
-int pause = 0;
+int end_cycle = 0;
 
 // Output variables
 uint8_t LED_1, LED_2, LED_3, LED_4, LED_5, LED_6, LED_7;
@@ -45,14 +46,11 @@ unsigned long loop_micros;
 void set_state(fsm_t& fsm, int new_state)
 {
   if (fsm.state != new_state) {  // if the state changed tis is reset
-      if (fsm.state == 3) {
-        fsm.state = new_state;
-   
-      } else {
+      
         fsm.state = new_state;
         fsm.tes = millis();
         fsm.tis = 0;
-      }
+      
   }
 }
 
@@ -66,7 +64,48 @@ void set_led(fsm_t& fsm, uint8_t* LED)
     *LED = 0;
   } else if (fsm.state == 3) { // Led OFF while paused state
     *LED = 0;
+  } else if (fsm.state == 4) { // Led OFF while paused state
+    *LED = 1;
   }
+}
+
+void set_conditions(fsm_t& fsm, uint8_t S1, uint8_t prevS1, uint8_t S2, uint8_t prevS2, unsigned long cur_time, int pos)
+{
+      // Calculate next state for the first state machine
+      if (fsm.state == 0 && (S1 || S2)) {
+        fsm.new_state = 1;
+      } else if(fsm.state == 1 && S1 && !prevS1) {
+        fsm.tes = millis();
+      } else if(fsm.state == 1 && S2 && !prevS2) {
+        fsm.new_state = 4;
+        fsm.tis_pause = fsm.tis;
+        fsm.pause = 1;
+      } else if (fsm.state == 1 && (fsm.tis + fsm.tis_pause) >= (2000*pos)) {
+        fsm.new_state = 2;
+        fsm.tis_pause = 0;
+        if (pos == 6) end_cycle = 1;
+      } else if (fsm.state == 4 && fsm.tis > 1000 && fsm.pause) {
+        fsm.new_state = 3;
+      } else if (fsm.state == 4 && S2 && !prevS2 && fsm.pause) {
+        fsm.pause = 0;
+        fsm.new_state = 1;
+      } else if (fsm.state == 3 && fsm.tis > 1000 && fsm.pause) {
+        fsm.new_state = 4;
+      } else if (fsm.state == 3 && S2 && !prevS2 && fsm.pause){
+        fsm.new_state = 1;
+       // fsm1.tes = cur_time - fsm1.tis_pause;
+        fsm.pause = 0;
+      // } else if(fsm1.state == 2 && S2 && !prevS2) {
+      //   fsm1.state = 2;
+      //   fsm1.pause = 1;
+      } else if (fsm.state == 2 && end_cycle) {
+        fsm.new_state = 1;
+        if (pos == 6) {
+          end_cycle = 0;
+          }
+      } else if (fsm.state == 2 && S1 && !prevS1){
+        fsm.new_state = 1;
+      }
 }
 
 // int check_switch(uint8_t S, uint8_t S_real, fsm_t& fsm) {
@@ -137,7 +176,6 @@ void loop()
       S1 = !digitalRead(S1_pin);
       S2 = !digitalRead(S2_pin);
 
-
       // FSM processing
 
       // Update tis for all state machines
@@ -150,163 +188,173 @@ void loop()
       fsm6.tis = cur_time - fsm6.tes;  
 
       // Calculate next state for the first state machine
-      if (fsm1.state == 0 && (S1 || S2)) {
-        fsm1.new_state = 1;
-      } else if(fsm1.state == 1 && S1 && !prevS1) {
-        fsm1.tes = millis();
-      } else if(fsm1.state == 1 && S2 && !prevS2) {
-        fsm1.tis_pause = fsm1.tis;
-        pause = 1;
-      } else if (fsm1.state == 1 && fsm1.tis > 2000) {
-        fsm1.new_state = 2;
-      } else if (fsm1.state == 1 && fsm1.tis > 1000 && pause) {
-        fsm1.new_state = 2;
-      } else if (fsm1.state == 1 && S2 && !prevS2 && pause){
-        fsm1.tes = cur_time - fsm1.tis_pause;
-        pause = 0;
-      } else if (fsm1.state == 2 && fsm1.tis > 1000 && pause) {
-        fsm1.new_state = 1;
-      } else if (fsm1.state == 2 && S2 && !prevS2 && pause){
-        fsm1.state = 2;
-        fsm1.tes = cur_time - fsm1.tis_pause;
-        pause = 0;
-      } else if (fsm1.state == 2 && end_cycle) {
-        fsm1.new_state = 1;
-      } else if (fsm1.state == 2 && S1 && !prevS1){
-        fsm1.new_state = 1;
-      }
+      set_conditions(fsm1, S1, prevS1, S2, prevS2, cur_time, 1);
+      set_conditions(fsm2, S1, prevS1, S2, prevS2, cur_time, 2);
+      set_conditions(fsm3, S1, prevS1, S2, prevS2, cur_time, 3);
+      set_conditions(fsm4, S1, prevS1, S2, prevS2, cur_time, 4);
+      set_conditions(fsm5, S1, prevS1, S2, prevS2, cur_time, 5);
+      set_conditions(fsm6, S1, prevS1, S2, prevS2, cur_time, 6);
 
-      if (fsm2.state == 0 && (S1 || S2)){
-        fsm2.new_state = 1;
-      } else if(fsm2.state == 1 && S1 && !prevS1) {
-        fsm2.tes = millis();
-      } else if(fsm2.state == 1 && S2 && !prevS2) {
-        fsm2.tis_pause = fsm2.tis;
-        pause = 1;
-      } else if (fsm2.state == 1 && fsm2.tis > 4000){
-        fsm2.new_state = 2;
-      } else if (fsm2.state == 1 && fsm2.tis > 1000 && pause) {
-        fsm2.new_state = 2;
-      } else if (fsm2.state == 1 && S2 && !prevS2 && pause){
-        fsm2.tes = cur_time - fsm2.tis_pause;
-        pause = 0;
-      } else if (fsm2.state == 2 && fsm2.tis > 1000 && pause) {
-        fsm2.new_state = 1;
-      } else if (fsm2.state == 2 && S2 && !prevS2 && pause){
-        fsm2.state = 2;
-        fsm2.tes = cur_time - fsm2.tis_pause;
-        pause = 0;
-      } else if (fsm2.state == 2 && end_cycle){
-        fsm2.new_state = 1;
-      } else if (fsm2.state == 2 && S1 && !prevS1){
-        fsm2.new_state = 1;
-      }
+      // if (fsm1.state == 0 && (S1 || S2)) {
+      //   fsm1.new_state = 1;
+      // } else if(fsm1.state == 1 && S1 && !prevS1) {
+      //   fsm1.tes = millis();
+      // } else if(fsm1.state == 1 && S2 && !prevS2) {
+      //   fsm1.tis_pause = fsm1.tis;
+      //   fsm1.pause = 1;
+      // } else if (fsm1.state == 1 && fsm1.tis > 2000) {
+      //   fsm1.new_state = 2;
+      // } else if (fsm1.state == 1 && fsm1.tis > 1000 && fsm1.pause) {
+      //   fsm1.new_state = 3;
+      // } else if (fsm1.state == 1 && S2 && !prevS2 && fsm1.pause) {
+      //   fsm1.tes = cur_time - fsm1.tis_pause;
+      //   fsm1.pause = 0;
+      // } else if (fsm1.state == 3 && fsm1.tis > 1000 && fsm1.pause) {
+      //   fsm1.new_state = 1;
+      // } else if (fsm1.state == 3 && S2 && !prevS2 && fsm1. pause){
+      //   fsm1.state = 1;
+      //  // fsm1.tes = cur_time - fsm1.tis_pause;
+      //   fsm1.pause = 0;
+      // // } else if(fsm1.state == 2 && S2 && !prevS2) {
+      // //   fsm1.state = 2;
+      // //   fsm1.pause = 1;
+      // } else if (fsm1.state == 2 && end_cycle) {
+      //   fsm1.new_state = 1;
+      // } else if (fsm1.state == 2 && S1 && !prevS1){
+      //   fsm1.new_state = 1;
+      // }
 
-      if (fsm3.state == 0 && (S1 || S2)){
-        fsm3.new_state = 1;
-      } else if(fsm3.state == 1 && S1 && !prevS1) {
-        fsm3.tes = millis();
-      } else if(fsm3.state == 1 && S2 && !prevS2) {
-        fsm3.tis_pause = fsm3.tis;
-        pause = 1;
-      } else if (fsm3.state == 1 && fsm3.tis > 6000){
-        fsm3.new_state = 2;
-      } else if (fsm3.state == 1 && fsm3.tis > 1000 && pause) {
-        fsm3.new_state = 2;
-      } else if (fsm3.state == 1 && S2 && !prevS2 && pause){
-        fsm3.tes = cur_time - fsm3.tis_pause;
-        pause = 0;
-      } else if (fsm3.state == 2 && fsm3.tis > 1000 && pause) {
-        fsm3.new_state = 1;
-      } else if (fsm3.state == 2 && S2 && !prevS2 && pause){
-        fsm3.state = 2;
-        fsm3.tes = cur_time - fsm3.tis_pause;
-        pause = 0;
-      } else if (fsm3.state == 2 && end_cycle){
-        fsm3.new_state = 1;
-      } else if (fsm3.state == 2 && S1 && !prevS1){
-        fsm3.new_state = 1;
-      }
+      // if (fsm2.state == 0 && (S1 || S2)){
+      //   fsm2.new_state = 1;
+      // } else if(fsm2.state == 1 && S1 && !prevS1) {
+      //   fsm2.tes = millis();
+      // } else if(fsm2.state == 1 && S2 && !prevS2) {
+      //   fsm2.tis_pause = fsm2.tis;
+      //   fsm2.pause = 1;
+      // } else if (fsm2.state == 1 && fsm2.tis > 4000){
+      //   fsm2.new_state = 2;
+      // } else if (fsm2.state == 1 && fsm2.tis > 1000 && fsm2.pause) {
+      //   fsm2.new_state = 2;
+      // } else if (fsm2.state == 1 && S2 && !prevS2 && fsm2.pause){
+      //   fsm2.tes = cur_time - fsm2.tis_pause;
+      //   fsm2.pause = 0;
+      // } else if (fsm2.state == 2 && fsm2.tis > 1000 && fsm2.pause) {
+      //   fsm2.new_state = 1;
+      // } else if (fsm2.state == 2 && S2 && !prevS2 && fsm2.pause){
+      //   fsm2.state = 2;
+      //   fsm2.tes = cur_time - fsm2.tis_pause;
+      //   fsm2.pause = 0;
+      // } else if (fsm2.state == 2 && end_cycle){
+      //   fsm2.new_state = 1;
+      // } else if (fsm2.state == 2 && S1 && !prevS1){
+      //   fsm2.new_state = 1;
+      // }
 
-      if (fsm4.state == 0 && (S1 || S2)){
-        fsm4.new_state = 1;
-      } else if(fsm4.state == 1 && S1 && !prevS1) {
-        fsm4.tes = millis();
-      } else if(fsm4.state == 1 && S2 && !prevS2) {
-        fsm4.tis_pause = fsm4.tis;
-        pause = 1;
-      } else if (fsm4.state == 1 && fsm4.tis > 8000){
-        fsm4.new_state = 2;
-      } else if (fsm4.state == 1 && fsm4.tis > 1000 && pause) {
-        fsm4.new_state = 2;
-      } else if (fsm4.state == 1 && S2 && !prevS2 && pause){
-        fsm4.tes = cur_time - fsm4.tis_pause;
-        pause = 0;
-      } else if (fsm4.state == 2 && fsm4.tis > 1000 && pause) {
-        fsm4.new_state = 1;
-      } else if (fsm4.state == 2 && S2 && !prevS2 && pause){
-        fsm4.state = 2;
-        fsm4.tes = cur_time - fsm4.tis_pause;
-        pause = 0;
-      } else if (fsm4.state == 2 && end_cycle){
-        fsm4.new_state = 1;
-      } else if (fsm4.state == 2 && S1 && !prevS1){
-        fsm4.new_state = 1;
-      }
+      // if (fsm3.state == 0 && (S1 || S2)){
+      //   fsm3.new_state = 1;
+      // } else if(fsm3.state == 1 && S1 && !prevS1) {
+      //   fsm3.tes = millis();
+      // } else if(fsm3.state == 1 && S2 && !prevS2) {
+      //   fsm3.tis_pause = fsm3.tis;
+      //   fsm3.pause = 1;
+      // } else if (fsm3.state == 1 && fsm3.tis > 6000){
+      //   fsm3.new_state = 2;
+      // } else if (fsm3.state == 1 && fsm3.tis > 1000 && fsm3.pause) {
+      //   fsm3.new_state = 2;
+      // } else if (fsm3.state == 1 && S2 && !prevS2 && fsm3.pause){
+      //   fsm3.tes = cur_time - fsm3.tis_pause;
+      //   fsm3.pause = 0;
+      // } else if (fsm3.state == 2 && fsm3.tis > 1000 && fsm3.pause) {
+      //   fsm3.new_state = 1;
+      // } else if (fsm3.state == 2 && S2 && !prevS2 && fsm3.pause){
+      //   fsm3.state = 2;
+      //   fsm3.tes = cur_time - fsm3.tis_pause;
+      //   fsm3.pause = 0;
+      // } else if (fsm3.state == 2 && end_cycle){
+      //   fsm3.new_state = 1;
+      // } else if (fsm3.state == 2 && S1 && !prevS1){
+      //   fsm3.new_state = 1;
+      // }
 
-      if (fsm5.state == 0 && (S1 || S2)){
-        fsm5.new_state = 1;
-      } else if(fsm5.state == 1 && S1 && !prevS1) {
-        fsm5.tes = millis();
-      } else if(fsm5.state == 1 && S2 && !prevS2) {
-        fsm5.tis_pause = fsm5.tis;
-        pause = 1;
-      } else if (fsm5.state == 1 && fsm5.tis > 10000){
-        fsm5.new_state = 2;
-      } else if (fsm5.state == 1 && fsm5.tis > 1000 && pause) {
-        fsm5.new_state = 2;
-      } else if (fsm5.state == 1 && S2 && !prevS2 && pause){
-        fsm5.tes = cur_time - fsm5.tis_pause;
-        pause = 0;
-      } else if (fsm5.state == 2 && fsm5.tis > 1000 && pause) {
-        fsm5.new_state = 1;
-      } else if (fsm5.state == 2 && S2 && !prevS2 && pause){
-        fsm5.state = 2;
-        fsm5.tes = cur_time - fsm5.tis_pause;
-        pause = 0;
-      } else if (fsm5.state == 2 && end_cycle){
-        fsm5.new_state = 1;
-      } else if (fsm5.state == 2 && S1 && !prevS1){
-        fsm5.new_state = 1;
-      }
+      // if (fsm4.state == 0 && (S1 || S2)){
+      //   fsm4.new_state = 1;
+      // } else if(fsm4.state == 1 && S1 && !prevS1) {
+      //   fsm4.tes = millis();
+      // } else if(fsm4.state == 1 && S2 && !prevS2) {
+      //   fsm4.tis_pause = fsm4.tis;
+      //   fsm4.pause = 1;
+      // } else if (fsm4.state == 1 && fsm4.tis > 8000){
+      //   fsm4.new_state = 2;
+      // } else if (fsm4.state == 1 && fsm4.tis > 1000 && fsm4.pause) {
+      //   fsm4.new_state = 2;
+      // } else if (fsm4.state == 1 && S2 && !prevS2 && fsm4.pause){
+      //   fsm4.tes = cur_time - fsm4.tis_pause;
+      //   fsm4.pause = 0;
+      // } else if (fsm4.state == 2 && fsm4.tis > 1000 && fsm4.pause) {
+      //   fsm4.new_state = 1;
+      // } else if (fsm4.state == 2 && S2 && !prevS2 && fsm4.pause){
+      //   fsm4.state = 2;
+      //   fsm4.tes = cur_time - fsm4.tis_pause;
+      //   fsm4.pause = 0;
+      // } else if (fsm4.state == 2 && end_cycle){
+      //   fsm4.new_state = 1;
+      // } else if (fsm4.state == 2 && S1 && !prevS1){
+      //   fsm4.new_state = 1;
+      // }
 
-      if (fsm6.state == 0 && (S1 || S2)){
-        fsm6.new_state = 1;
-      } else if(fsm6.state == 1 && S1 && !prevS1) {
-        fsm6.tes = 0;
-      } else if(fsm6.state == 1 && S2 && !prevS2) {
-        fsm6.tis_pause = fsm6.tis;
-        pause = 1;
-      } else if (fsm6.state == 1 && fsm6.tis > 12000) {
-        fsm6.new_state = 2;
-        end_cycle = 1;
-      } else if (fsm6.state == 1 && fsm6.tis > 1000 && pause) {
-        fsm6.new_state = 2;
-      } else if (fsm6.state == 1 && S2 && !prevS2 && pause){
-        fsm6.tes = cur_time - fsm6.tis_pause;
-        pause = 0;
-      } else if (fsm6.state == 2 && fsm6.tis > 1000 && pause) {
-        fsm6.new_state = 1;
-      } else if (fsm6.state == 2 && S2 && !prevS2 && pause){
-        fsm6.state = 2;
-        fsm6.tes = cur_time - fsm6.tis_pause;
-        pause = 0;
-      } else if (fsm6.state == 2 && end_cycle) {
-        fsm6.new_state = 1;
-        end_cycle = 0;
-      } else if (fsm6.state == 2 && S1 && !prevS1){
-        fsm6.new_state = 1;
-      }
+      // if (fsm5.state == 0 && (S1 || S2)){
+      //   fsm5.new_state = 1;
+      // } else if(fsm5.state == 1 && S1 && !prevS1) {
+      //   fsm5.tes = millis();
+      // } else if(fsm5.state == 1 && S2 && !prevS2) {
+      //   fsm5.tis_pause = fsm5.tis;
+      //   fsm5.pause = 1;
+      // } else if (fsm5.state == 1 && fsm5.tis > 10000){
+      //   fsm5.new_state = 2;
+      // } else if (fsm5.state == 1 && fsm5.tis > 1000 && fsm5.pause) {
+      //   fsm5.new_state = 2;
+      // } else if (fsm5.state == 1 && S2 && !prevS2 && fsm5.pause){
+      //   fsm5.tes = cur_time - fsm5.tis_pause;
+      //   fsm5.pause = 0;
+      // } else if (fsm5.state == 2 && fsm5.tis > 1000 && fsm5.pause) {
+      //   fsm5.new_state = 1;
+      // } else if (fsm5.state == 2 && S2 && !prevS2 && fsm5.pause){
+      //   fsm5.state = 2;
+      //   fsm5.tes = cur_time - fsm5.tis_pause;
+      //   fsm5.pause = 0;
+      // } else if (fsm5.state == 2 && end_cycle){
+      //   fsm5.new_state = 1;
+      // } else if (fsm5.state == 2 && S1 && !prevS1){
+      //   fsm5.new_state = 1;
+      // }
+
+      // if (fsm6.state == 0 && (S1 || S2)){
+      //   fsm6.new_state = 1;
+      // } else if(fsm6.state == 1 && S1 && !prevS1) {
+      //   fsm6.tes = 0;
+      // } else if(fsm6.state == 1 && S2 && !prevS2) {
+      //   fsm6.tis_pause = fsm6.tis;
+      //   fsm6.pause = 1;
+      // } else if (fsm6.state == 1 && fsm6.tis > 12000) {
+      //   fsm6.new_state = 2;
+      //   end_cycle = 1;
+      // } else if (fsm6.state == 1 && fsm6.tis > 1000 && fsm6.pause) {
+      //   fsm6.new_state = 2;
+      // } else if (fsm6.state == 1 && S2 && !prevS2 && fsm6.pause){
+      //   fsm6.tes = cur_time - fsm6.tis_pause;
+      //   fsm6.pause = 0;
+      // } else if (fsm6.state == 2 && fsm6.tis > 1000 && fsm6.pause) {
+      //   fsm6.new_state = 1;
+      // } else if (fsm6.state == 2 && S2 && !prevS2 && fsm6.pause){
+      //   fsm6.state = 2;
+      //   fsm6.tes = cur_time - fsm6.tis_pause;
+      //   fsm6.pause = 0;
+      // } else if (fsm6.state == 2 && end_cycle) {
+      //   fsm6.new_state = 1;
+      //   end_cycle = 0;
+      // } else if (fsm6.state == 2 && S1 && !prevS1){
+      //   fsm6.new_state = 1;
+      // }
 
       // Calculate next state for the second state machine
       /*if (fsm2.state == 0 && S2 && !prevS2){
@@ -314,8 +362,6 @@ void loop()
       } else if (fsm2.state == 1 && S2 && !prevS2){
         fsm2.new_state = 0;
       }*/
-
-
 
       // Update the states
       set_state(fsm1, fsm1.new_state);
@@ -396,4 +442,3 @@ void loop()
     }
     
 }
-
