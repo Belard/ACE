@@ -1,4 +1,4 @@
-#include <Arduino.h>  
+#include <Arduino.h> 
 #define LED1_pin 6
 #define LED2_pin 7
 #define LED3_pin 8
@@ -59,7 +59,11 @@ unsigned long loop_micros;
 // Set new state
 void set_state(fsm_t& fsm, int new_state)
 {
-  if (fsm.state != new_state) {  // if the state changed tis is reset
+  if (fsm.state == 1 && fsm.new_state == 2) {
+    fsm.state = new_state;
+  // } else if (fsm.state == 2 && fsm.new_state == 1 && !end_cycle) {
+  //   fsm.state = new_state;
+  } else if (fsm.state != new_state) {  // if the state changed tis is reset
       
         fsm.state = new_state;
         fsm.tes = millis();
@@ -80,9 +84,6 @@ void set_led(fsm_t& fsm, uint8_t* LED)
     *LED = 0;
   } else if (fsm.state == 4) { // Led ON while paused state
     *LED = 1;
-  } else if (fsm.state == 5) { // Led ON state
-    *LED = 1;
-    fsm.tes = fsm.tes - 2000;
   }
 }
 
@@ -103,31 +104,27 @@ void set_conditions(fsm_t& fsm, uint8_t S1_status, u_int8_t S2_status, int pos)
         //if (pos == 6) end_cycle = 1;
       } else if (fsm.state == 4 && fsm.tis > 1000 && fsm.pause) {
         fsm.new_state = 3;
-      } else if (fsm.state == 4 && S2_status == 1  && fsm.pause) {
+      } else if (fsm.state == 4 && (S2_status == 1 || S2_status == 2)  && fsm.pause) {
         fsm.pause = 0;
         fsm.new_state = 1;
-      } else if (fsm.state == 4 && S2_status == 2  && fsm.pause) {
-        fsm.pause = 0;
-        fsm.new_state = 5;
       } else if (fsm.state == 3 && fsm.tis > 1000 && fsm.pause) {
         fsm.new_state = 4;
       } else if (fsm.state == 3 && (S2_status == 1 || S2_status == 2) && fsm.pause){
         fsm.new_state = 1;
-        fsm.pause = 0;     
+       // fsm1.tes = cur_time - fsm1.tis_pause;
+        fsm.pause = 0;
+      // } else if(fsm1.state == 2 && S2 && !prevS2) {
+      //   fsm1.state = 2;
+      //   fsm1.pause = 1;
       } else if (fsm.state == 2 && end_cycle) {
         fsm.new_state = 1;
-      } else if (fsm.state == 2 && S1 && !prevS1){
+        // if (pos == 6) {
+        //   end_cycle = 0;
+        //   }
+      // } else if (fsm.state == 2 && (fsm.tis + fsm.tis_pause) <= (2000*pos)) {
+      //   fsm.new_state = 1; 
+      } else if (fsm.state == 2 &&  S1_status == 1){
         fsm.new_state = 1;
-      }  else if(fsm.state == 5 && S1_status == 1) {
-        fsm.tes = millis();
-      } else if(fsm.state == 5 && S2_status == 1) {
-        fsm.new_state = 4;
-        fsm.tis_pause = fsm.tis;
-        fsm.pause = 1;
-      } else if (fsm.state == 5 && (fsm.tis + fsm.tis_pause) >= (2000*pos)) {
-        fsm.new_state = 2;
-        fsm.tis_pause = 0;
-        //if (pos == 6) end_cycle = 1;
       }
 }
 
@@ -326,11 +323,11 @@ void loop()
         //   extra = 2000;
         // } else extra = 0;
 
-        if (fsm7.state == 0 && (S1 || S2)) {
+        if (fsm7.state == 0 && (S1_status || S2_status)) {
           fsm7.new_state = 2;
-        } else if(fsm7.state == 2 && S1 && !prevS1) {
+        } else if(fsm7.state == 2 && S2_status == 1) {
           fsm7.tes = millis();
-        } else if(fsm7.state == 2 && S2 && !prevS2) {
+        } else if(fsm7.state == 2 && S2_status == 1) {
           fsm7.new_state = 3;
           fsm7.tis_pause = fsm7.tis;
           fsm7.pause = 1;
@@ -340,9 +337,9 @@ void loop()
           fsm7.new_state = 2;
           fsm7.tis_pause = 0;
           end_cycle = 1;
-        } else if(fsm7.state == 1 && S1 && !prevS1) {
+        } else if(fsm7.state == 1 && S1_status == 1) {
           fsm7.new_state = 2;
-        } else if (fsm7.state == 3 && S2 && !prevS2 && fsm7.pause){
+        } else if (fsm7.state == 3 && (S2_status == 1 || S2_status == 2)  && fsm7.pause){
           fsm7.new_state = 2;
         // fsm1.tes = cur_time - fsm1.tis_pause;
           fsm7.pause = 0;
@@ -365,15 +362,18 @@ void loop()
       set_state(fsm6, fsm6.new_state);
       set_state(fsm7, fsm7.new_state);
 
-     /* if (S2_status == 2) {
-        fsm1.tes = fsm1.tes + 2000;
-        fsm2.tes = fsm2.tes + 2000;
-        fsm3.tes = fsm3.tes + 2000;
-        fsm4.tes = fsm4.tes + 2000;
-        fsm5.tes = fsm5.tes + 2000;
-        fsm6.tes = fsm6.tes + 2000;
-        fsm7.tes = fsm7.tes + 2000;
-      }*/
+      if (S2_status == 2) {
+        Serial.print("\n \n \n \n \n Passou uma vez \n \n \n \n \n");
+
+        if (fsm1.tis > 2000) fsm1.tes = fsm1.tes + 2000;
+        if (fsm2.tis > 2000) fsm2.tes = fsm2.tes + 2000;
+        if (fsm3.tis > 2000) fsm3.tes = fsm3.tes + 2000;
+        if (fsm4.tis > 2000) fsm4.tes = fsm4.tes + 2000;
+        if (fsm5.tis > 2000) fsm5.tes = fsm5.tes + 2000;
+        if (fsm6.tis > 2000) fsm6.tes = fsm6.tes + 2000;
+        if (fsm7.tis > 2000) fsm7.tes = fsm7.tes + 2000;
+      }
+
 
       // Actions set by the current state of the first state machine
       set_led(fsm1, &LED_1);
@@ -401,60 +401,80 @@ void loop()
       digitalWrite(LED7_pin, LED_7);
 
       // Debug using the serial port
-      Serial.print("S1: ");
-      Serial.print(S1);
+      // Serial.print("S1: ");
+      // Serial.print(S1);
 
-      Serial.print(" S2: ");
-      Serial.print(S2);
+      // Serial.print(" S2: ");
+      // Serial.print(S2);
 
-      Serial.print(" fsm1.state: ");
+      Serial.print(" fsm1.tis: ");
+      Serial.print(fsm1.tis);
+
+      Serial.print(" fsm2.tis: ");
+      Serial.print(fsm2.tis);
+
+      Serial.print(" fsm3.tis: ");
+      Serial.print(fsm3.tis);
+
+      Serial.print(" fsm4.tis: ");
+      Serial.print(fsm4.tis);
+
+      Serial.print(" fsm5.tis: ");
+      Serial.print(fsm5.tis);
+
+      Serial.print(" fsm6.tis: ");
+      Serial.print(fsm6.tis);
+
+      Serial.print(" fsm7.tis: ");
+      Serial.print(fsm7.tis);
+
+      Serial.print(" fsm1.tes: ");
       Serial.print(fsm1.tes);
 
-      Serial.print(" fsm2.state: ");
+      Serial.print(" fsm2.tes: ");
       Serial.print(fsm2.tes);
 
-      Serial.print(" fsm3.state: ");
+      Serial.print(" fsm3.tes: ");
       Serial.print(fsm3.tes);
 
-      Serial.print(" fsm4.state: ");
+      Serial.print(" fsm4.tes: ");
       Serial.print(fsm4.tes);
 
-      Serial.print(" fsm5.state: ");
+      Serial.print(" fsm5.tes: ");
       Serial.print(fsm5.tes);
 
-      Serial.print(" fsm6.state: ");
+      Serial.print(" fsm6.tes: ");
       Serial.print(fsm6.tes);
 
       Serial.print(" fsm7.state: ");
-      Serial.print(fsm7.tes);          
+      Serial.print(fsm7.tes);
 
-      Serial.print(" LED_1: ");
-      Serial.print(LED_1);
+      // Serial.print(" LED_1: ");
+      // Serial.print(LED_1);
 
-      Serial.print(" LED_2: ");
-      Serial.print(LED_2);
+      // Serial.print(" LED_2: ");
+      // Serial.print(LED_2);
 
-      Serial.print(" LED_3: ");
-      Serial.print(LED_3);
+      // Serial.print(" LED_3: ");
+      // Serial.print(LED_3);
 
-      Serial.print(" LED_4: ");
-      Serial.print(LED_4);
+      // Serial.print(" LED_4: ");
+      // Serial.print(LED_4);
 
-      Serial.print(" LED_5: ");
-      Serial.print(LED_5);
+      // Serial.print(" LED_5: ");
+      // Serial.print(LED_5);
 
-      Serial.print(" LED_6: ");
-      Serial.print(LED_6);
+      // Serial.print(" LED_6: ");
+      // Serial.print(LED_6);
 
-      Serial.print(" LED_7: ");
-      Serial.print(LED_7);
+      // Serial.print(" LED_7: ");
+      // Serial.print(LED_7);
 
-      Serial.print(" DoubleClick: ");
-      Serial.print(S2_status);
+      // Serial.print(" DoubleClick: ");
+      // Serial.print(S2_status);
 
       Serial.print(" loop: ");
-      Serial.println(micros() - loop_micros);
+      Serial.println(millis() /*- loop_micros*/);
     }
     
 }
-
