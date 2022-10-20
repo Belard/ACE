@@ -1,4 +1,4 @@
-#include <Arduino.h> 
+#include <Arduino.h>  
 #define LED1_pin 6
 #define LED2_pin 7
 #define LED3_pin 8
@@ -26,8 +26,8 @@ uint8_t S2, prevS2;
 
 uint8_t S1_real, S2_real;
 
-uint8_t S1_doubleclick = 0;
-uint8_t S2_doubleclick = 0;
+uint8_t S1_status = 0;
+uint8_t S2_status = 0;
 
 uint8_t S1_doubleclick_flag = 0;
 uint8_t S2_doubleclick_flag = 0;
@@ -80,17 +80,20 @@ void set_led(fsm_t& fsm, uint8_t* LED)
     *LED = 0;
   } else if (fsm.state == 4) { // Led ON while paused state
     *LED = 1;
+  } else if (fsm.state == 5) { // Led ON state
+    *LED = 1;
+    fsm.tes = fsm.tes - 2000;
   }
 }
 
-void set_conditions(fsm_t& fsm, uint8_t S1, uint8_t prevS1, uint8_t S2, uint8_t prevS2, int pos)
+void set_conditions(fsm_t& fsm, uint8_t S1_status, u_int8_t S2_status, int pos)
 {
       // Calculate next state for the first state machine
-      if (fsm.state == 0 && (S1 || S2)) {
+      if (fsm.state == 0 && (S1_status || S2_status)) {
         fsm.new_state = 1;
-      } else if(fsm.state == 1 && S1 && !prevS1) {
+      } else if(fsm.state == 1 && S1_status == 1) {
         fsm.tes = millis();
-      } else if(fsm.state == 1 && S2 && !prevS2) {
+      } else if(fsm.state == 1 && S2_status == 1) {
         fsm.new_state = 4;
         fsm.tis_pause = fsm.tis;
         fsm.pause = 1;
@@ -100,25 +103,31 @@ void set_conditions(fsm_t& fsm, uint8_t S1, uint8_t prevS1, uint8_t S2, uint8_t 
         //if (pos == 6) end_cycle = 1;
       } else if (fsm.state == 4 && fsm.tis > 1000 && fsm.pause) {
         fsm.new_state = 3;
-      } else if (fsm.state == 4 && S2 && !prevS2 && fsm.pause) {
+      } else if (fsm.state == 4 && S2_status == 1  && fsm.pause) {
         fsm.pause = 0;
         fsm.new_state = 1;
+      } else if (fsm.state == 4 && S2_status == 2  && fsm.pause) {
+        fsm.pause = 0;
+        fsm.new_state = 5;
       } else if (fsm.state == 3 && fsm.tis > 1000 && fsm.pause) {
         fsm.new_state = 4;
-      } else if (fsm.state == 3 && S2 && !prevS2 && fsm.pause){
+      } else if (fsm.state == 3 && (S2_status == 1 || S2_status == 2) && fsm.pause){
         fsm.new_state = 1;
-       // fsm1.tes = cur_time - fsm1.tis_pause;
-        fsm.pause = 0;
-      // } else if(fsm1.state == 2 && S2 && !prevS2) {
-      //   fsm1.state = 2;
-      //   fsm1.pause = 1;
+        fsm.pause = 0;     
       } else if (fsm.state == 2 && end_cycle) {
         fsm.new_state = 1;
-        // if (pos == 6) {
-        //   end_cycle = 0;
-        //   }
       } else if (fsm.state == 2 && S1 && !prevS1){
         fsm.new_state = 1;
+      }  else if(fsm.state == 5 && S1_status == 1) {
+        fsm.tes = millis();
+      } else if(fsm.state == 5 && S2_status == 1) {
+        fsm.new_state = 4;
+        fsm.tis_pause = fsm.tis;
+        fsm.pause = 1;
+      } else if (fsm.state == 5 && (fsm.tis + fsm.tis_pause) >= (2000*pos)) {
+        fsm.new_state = 2;
+        fsm.tis_pause = 0;
+        //if (pos == 6) end_cycle = 1;
       }
 }
 
@@ -257,14 +266,13 @@ void loop()
       fsm6.tis = cur_time - fsm6.tes;  
       fsm7.tis = cur_time - fsm7.tes;
 
-      S1_doubleclick = check_switch(S1, prevS1, sw1, S1_doubleclick_flag, S1_longpress_flag);
-      S2_doubleclick = check_switch(S2, prevS2, sw2, S2_doubleclick_flag, S2_longpress_flag);
+      S1_status = check_switch(S1, prevS1, sw1, S1_doubleclick_flag, S1_longpress_flag);
+      S2_status = check_switch(S2, prevS2, sw2, S2_doubleclick_flag, S2_longpress_flag);
 
-      if (S1_doubleclick ==3) {
+      if (S1_status == 3) {
         config_mode = !config_mode;
         counter_flag = 1;
       }
-      if (S2_doubleclick ==2) extra_led = !extra_led;
 
       if (config_mode) {
         if (fsm1.state == 0) {
@@ -307,12 +315,12 @@ void loop()
         }
       } else {
         // Calculate next state for the first state machine
-        set_conditions(fsm1, S1, prevS1, S2, prevS2, 1);
-        set_conditions(fsm2, S1, prevS1, S2, prevS2, 2);
-        set_conditions(fsm3, S1, prevS1, S2, prevS2, 3);
-        set_conditions(fsm4, S1, prevS1, S2, prevS2, 4);
-        set_conditions(fsm5, S1, prevS1, S2, prevS2, 5);
-        set_conditions(fsm6, S1, prevS1, S2, prevS2, 6);
+        set_conditions(fsm1, S1_status, S2_status, 1);
+        set_conditions(fsm2, S1_status, S2_status, 2);
+        set_conditions(fsm3, S1_status, S2_status, 3);
+        set_conditions(fsm4, S1_status, S2_status, 4);
+        set_conditions(fsm5, S1_status, S2_status, 5);
+        set_conditions(fsm6, S1_status, S2_status, 6);
         // if (extra_led) {
         //   set_conditions(fsm7, S1, prevS1, S2, prevS2, 7);
         //   extra = 2000;
@@ -347,6 +355,8 @@ void loop()
 
       }
       // Update the states
+
+      
       set_state(fsm1, fsm1.new_state);
       set_state(fsm2, fsm2.new_state);
       set_state(fsm3, fsm3.new_state);
@@ -355,6 +365,15 @@ void loop()
       set_state(fsm6, fsm6.new_state);
       set_state(fsm7, fsm7.new_state);
 
+     /* if (S2_status == 2) {
+        fsm1.tes = fsm1.tes + 2000;
+        fsm2.tes = fsm2.tes + 2000;
+        fsm3.tes = fsm3.tes + 2000;
+        fsm4.tes = fsm4.tes + 2000;
+        fsm5.tes = fsm5.tes + 2000;
+        fsm6.tes = fsm6.tes + 2000;
+        fsm7.tes = fsm7.tes + 2000;
+      }*/
 
       // Actions set by the current state of the first state machine
       set_led(fsm1, &LED_1);
@@ -389,25 +408,25 @@ void loop()
       Serial.print(S2);
 
       Serial.print(" fsm1.state: ");
-      Serial.print(fsm1.state);
+      Serial.print(fsm1.tes);
 
       Serial.print(" fsm2.state: ");
-      Serial.print(fsm2.state);
+      Serial.print(fsm2.tes);
 
       Serial.print(" fsm3.state: ");
-      Serial.print(fsm3.state);
+      Serial.print(fsm3.tes);
 
       Serial.print(" fsm4.state: ");
-      Serial.print(fsm4.state);
+      Serial.print(fsm4.tes);
 
       Serial.print(" fsm5.state: ");
-      Serial.print(fsm5.state);
+      Serial.print(fsm5.tes);
 
       Serial.print(" fsm6.state: ");
-      Serial.print(fsm6.state);
+      Serial.print(fsm6.tes);
 
       Serial.print(" fsm7.state: ");
-      Serial.print(fsm7.state);          
+      Serial.print(fsm7.tes);          
 
       Serial.print(" LED_1: ");
       Serial.print(LED_1);
@@ -430,8 +449,12 @@ void loop()
       Serial.print(" LED_7: ");
       Serial.print(LED_7);
 
+      Serial.print(" DoubleClick: ");
+      Serial.print(S2_status);
+
       Serial.print(" loop: ");
       Serial.println(micros() - loop_micros);
     }
     
 }
+
