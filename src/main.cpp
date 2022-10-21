@@ -39,6 +39,7 @@ int blink_mode = 0;
 int finish_mode = 0;
 
 int timer = 0;
+int timer_led_7 = 0;
 
 int led_7_counter = 0;
 
@@ -116,18 +117,23 @@ void loop()
 
       switch (interval_counter) {
         case 0:
+          timer_led_7 = 1000;
           timer = 1000;
           break;
         case 1:
+          timer_led_7 = 2000;
           timer = 2000;
           break;
         case 2:
+          timer_led_7 = 4000;
           timer = 4000;
           break;
         case 3:
+          timer_led_7 = 8000;
           timer = 8000;
           break;
         default:
+          timer_led_7 = 2000;
           timer = 2000;
           break;
       }
@@ -213,7 +219,25 @@ void loop()
       } else if(fsm.state == 43 && S1 && !prevS1) {
         led_7_counter = 0;        
         fsm.new_state = 41;
-      } else if(( fsm.state == 43 || fsm.state == 42 || fsm.state == 41 || fsm.state == 33 || fsm.state == 32 || fsm.state == 31) && S1 && prevS1 && fsm.tis >= 3000) {
+      } else if(fsm.state == 311 && S1 && !prevS1) {
+        led_7_counter = 0;        
+        fsm.new_state = 32;
+      } else if(fsm.state == 321 && S1 && !prevS1) {
+        led_7_counter = 0;        
+        fsm.new_state = 33;
+      } else if(fsm.state == 331 && S1 && !prevS1) {
+        led_7_counter = 0;        
+        fsm.new_state = 31;
+      } else if(fsm.state == 411 && S1 && !prevS1) {
+        led_7_counter = 0;        
+        fsm.new_state = 42;
+      } else if(fsm.state == 421 && S1 && !prevS1) {
+        led_7_counter = 0;        
+        fsm.new_state = 43;
+      } else if(fsm.state == 431 && S1 && !prevS1) {
+        led_7_counter = 0;        
+        fsm.new_state = 41;
+      } else if(( fsm.state == 43 || fsm.state == 42 || fsm.state == 41 || fsm.state == 33 || fsm.state == 32 || fsm.state == 31 || fsm.state == 431 || fsm.state == 421 || fsm.state == 411 || fsm.state == 331 || fsm.state == 321 || fsm.state == 311) && S1 && prevS1 && fsm.tis >= 3000) {
         fsm.new_state = 1;
 
       //Config mode LED_1
@@ -227,84 +251,68 @@ void loop()
         finish_mode = !finish_mode;
 
       //Config Mode (aceso)
-      } else if (fsm.state == 31 && fsm.tis > 1000 && !(S1 && prevS1) && led_7_counter <= (timer/1000))  {
+      } else if (fsm.state == 31 && fsm.tis > 1000 && !(S1 && prevS1) && led_7_counter <= (timer_led_7/1000))  {
         fsm.new_state = 41;
         led_7_counter++;
-      } else if (fsm.state == 32 && fsm.tis > 1000 && !(S1 && prevS1) && led_7_counter <= (timer/1000))   {
+      } else if (fsm.state == 32 && fsm.tis > 1000 && !(S1 && prevS1))   {
         fsm.new_state = 42;
-        led_7_counter++;
-      } else if (fsm.state == 33 && fsm.tis > 1000 && !(S1 && prevS1) && led_7_counter <= (timer/1000))   {
+      } else if (fsm.state == 33 && fsm.tis > 1000 && !(S1 && prevS1))   {
         fsm.new_state = 43;
-        led_7_counter++;
-      } else if (fsm.state == 31 && fsm.tis > 1000 && !(S1 && prevS1) && led_7_counter > (timer/1000))  {
+      } else if (fsm.state == 31 && fsm.tis > 1000 && !(S1 && prevS1) && led_7_counter > (timer_led_7/1000))  {
         fsm.new_state = 411;
         led_7_counter = 0;
-      } else if (fsm.state == 32 && fsm.tis > 1000 && !(S1 && prevS1) && led_7_counter > (timer/1000))  {
+      } else if (fsm.state == 32 && fsm.tis > 1000 && !(S1 && prevS1))  {
         fsm.new_state = 421;
-        led_7_counter = 0;
-      } else if (fsm.state == 33 && fsm.tis > 1000 && !(S1 && prevS1) && led_7_counter > (timer/1000))  {
+      } else if (fsm.state == 33 && fsm.tis > 1000 && !(S1 && prevS1))  {
         fsm.new_state = 431;
-        led_7_counter = 0;
 
       //Config Mode (apagado)
-      } else if (fsm.state == 41 && fsm.tis > 1000 && !(S1 && prevS1) && led_7_counter <= (timer/1000)) {
+      } else if (fsm.state == 41 && fsm.tis > 1000 && !(S1 && prevS1) && led_7_counter <= (timer_led_7/1000)) {
         fsm.new_state = 31;
         led_7_counter++;
-      } else if (fsm.state == 42 && fsm.tis > 1000 && !(S1 && prevS1) && led_7_counter <= (timer/1000))  {
+      } else if (fsm.state == 42 && fsm.tis > 1000 && !(S1 && prevS1))  {
         fsm.new_state = 32;
-        led_7_counter++;
-      } else if (fsm.state == 43 && fsm.tis > 1000 && !(S1 && prevS1) && led_7_counter <= (timer/1000))  {
+      } else if (fsm.state == 43 && fsm.tis > 1000 && !(S1 && prevS1))  {
         fsm.new_state = 33;
-        led_7_counter++;
-      } else if (fsm.state == 41 && fsm.tis > 1000 && !(S1 && prevS1) && led_7_counter > (timer/1000))  {
+      } else if (fsm.state == 41 && fsm.tis > 1000 && !(S1 && prevS1) && led_7_counter > (timer_led_7/1000))  {
         fsm.new_state = 311;
         led_7_counter = 0;
-      } else if (fsm.state == 42 && fsm.tis > 1000 && !(S1 && prevS1) && led_7_counter > (timer/1000))  {
+      } else if (fsm.state == 42 && fsm.tis > 1000 && !(S1 && prevS1))  {
         fsm.new_state = 321;
-        led_7_counter = 0;
-      } else if (fsm.state == 43 && fsm.tis > 1000 && !(S1 && prevS1) && led_7_counter > (timer/1000))  {
+      } else if (fsm.state == 43 && fsm.tis > 1000 && !(S1 && prevS1))  {
         fsm.new_state = 331;
-        led_7_counter = 0;
 
       //Config Mode (aceso) LED_7_ON
-      } else if (fsm.state == 311 && fsm.tis > 1000 && !(S1 && prevS1) && led_7_counter <= (timer/1000)) {
+      } else if (fsm.state == 311 && fsm.tis > 1000 && !(S1 && prevS1) && led_7_counter <= (timer_led_7/1000)) {
         fsm.new_state = 411;
         led_7_counter++;
-      } else if (fsm.state == 321 && fsm.tis > 1000 && !(S1 && prevS1) && led_7_counter <= (timer/1000)) {
+      } else if (fsm.state == 321 && fsm.tis > 1000 && !(S1 && prevS1)) {
         fsm.new_state = 421;
-        led_7_counter++;
-      } else if (fsm.state == 331 && fsm.tis > 1000 && !(S1 && prevS1) && led_7_counter <= (timer/1000)) {
+      } else if (fsm.state == 331 && fsm.tis > 1000 && !(S1 && prevS1)) {
         fsm.new_state = 431;
-        led_7_counter++;
-      } else if (fsm.state == 311 && fsm.tis > 1000 && !(S1 && prevS1) && led_7_counter > (timer/1000))  {
+      } else if (fsm.state == 311 && fsm.tis > 1000 && !(S1 && prevS1) && led_7_counter > (timer_led_7/1000))  {
         fsm.new_state = 41;
         led_7_counter = 0;
-      } else if (fsm.state == 321 && fsm.tis > 1000 && !(S1 && prevS1) && led_7_counter > (timer/1000))  {
+      } else if (fsm.state == 321 && fsm.tis > 1000 && !(S1 && prevS1))  {
         fsm.new_state = 42;
-        led_7_counter = 0;
-      } else if (fsm.state == 331 && fsm.tis > 1000 && !(S1 && prevS1) && led_7_counter > (timer/1000))  {
+      } else if (fsm.state == 331 && fsm.tis > 1000 && !(S1 && prevS1))  {
         fsm.new_state = 43;
-        led_7_counter = 0;
 
       //Config Mode (apagado) LED_7_ON
-      } else if (fsm.state == 411 && fsm.tis > 1000 && !(S1 && prevS1) && led_7_counter <= (timer/1000)) {
+      } else if (fsm.state == 411 && fsm.tis > 1000 && !(S1 && prevS1) && led_7_counter <= (timer_led_7/1000)) {
         fsm.new_state = 311;
         led_7_counter++;
-      } else if (fsm.state == 421 && fsm.tis > 1000 && !(S1 && prevS1) && led_7_counter <= (timer/1000)) {
+      } else if (fsm.state == 421 && fsm.tis > 1000 && !(S1 && prevS1)) {
         fsm.new_state = 321;
-        led_7_counter++;
-      } else if (fsm.state == 431 && fsm.tis > 1000 && !(S1 && prevS1) && led_7_counter <= (timer/1000)) {
+      } else if (fsm.state == 431 && fsm.tis > 1000 && !(S1 && prevS1)) {
         fsm.new_state = 331;
-        led_7_counter++;
-      } else if (fsm.state == 411 && fsm.tis > 1000 && !(S1 && prevS1) && led_7_counter > (timer/1000))  {
+      } else if (fsm.state == 411 && fsm.tis > 1000 && !(S1 && prevS1) && led_7_counter > (timer_led_7/1000))  {
         fsm.new_state = 31;
         led_7_counter = 0;
-      } else if (fsm.state == 421 && fsm.tis > 1000 && !(S1 && prevS1) && led_7_counter > (timer/1000))  {
+      } else if (fsm.state == 421 && fsm.tis > 1000 && !(S1 && prevS1))  {
         fsm.new_state = 32;
-        led_7_counter = 0;
-      } else if (fsm.state == 431 && fsm.tis > 1000 && !(S1 && prevS1) && led_7_counter > (timer/1000))  {
+      } else if (fsm.state == 431 && fsm.tis > 1000 && !(S1 && prevS1))  {
         fsm.new_state = 33;
-        led_7_counter = 0;
 
       // Passar ao próximo estado
       } else if (fsm.state == 1 && (fsm.tis + fsm.tis_pause) >= timer) {
@@ -322,12 +330,21 @@ void loop()
       } else if (fsm.state == 5 && (fsm.tis + fsm.tis_pause) >= timer) {
         fsm.new_state = 6;
         fsm.tis_pause = 0;
-      } else if (fsm.state == 6 && (fsm.tis + fsm.tis_pause) >= timer) {
+      } else if (fsm.state == 6 && (fsm.tis + fsm.tis_pause) >= timer && !finish_mode) {
         fsm.new_state = 7;
+        fsm.tis_pause = 0;
+      } else if (fsm.state == 6 && (fsm.tis + fsm.tis_pause) >= timer && finish_mode) {
+        fsm.new_state = 71;
         fsm.tis_pause = 0;
       } else if (fsm.state == 7 && (fsm.tis + fsm.tis_pause) >= 500) {
         fsm.new_state = 1;
-        fsm.tis_pause = 0;  
+        fsm.tis_pause = 0;
+      } else if (fsm.state == 71 && (fsm.tis + fsm.tis_pause) >= 100) {
+        fsm.new_state = 72;
+        fsm.tis_pause = 0;
+      } else if (fsm.state == 72 && (fsm.tis + fsm.tis_pause) >= 100) {
+        fsm.new_state = 1;
+        fsm.tis_pause = 0;     
       
       //Piscar em Pausa vindo do doubleclick (Aceso)
       } else if (fsm.state == 51 && fsm.tis > 1000 && fsm.pause) {
@@ -436,6 +453,10 @@ void loop()
     //Fim do Ciclo
     } else if (fsm.state == 7) { 
       LED_1 = 0, LED_2 = 0, LED_3 = 0, LED_4 = 0, LED_5 = 0, LED_6 = 0, LED_7 = 1;
+    } else if (fsm.state == 71) { 
+      LED_1 = 1, LED_2 = 1, LED_3 = 1, LED_4 = 1, LED_5 = 1, LED_6 = 1, LED_7 = 0;
+    } else if (fsm.state == 72) { 
+      LED_1 = 0, LED_2 = 0, LED_3 = 0, LED_4 = 0, LED_5 = 0, LED_6 = 0, LED_7 = 0;
 
     //Piscar (Aceso)
     } else if (fsm.state == 11) { 
@@ -529,8 +550,8 @@ void loop()
       Serial.print(" S2: ");
       Serial.print(S2);
 
-      Serial.print(" fsm.state*: ");
-      Serial.print(led_7_counter);    
+      Serial.print(" fsm.state: ");
+      Serial.print(finish_mode);    
 
       Serial.print(" LED_1: ");
       Serial.print(LED_1);
