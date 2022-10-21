@@ -123,50 +123,50 @@ void loop()
 
       // Ativar Pausa
       } else if(fsm.state == 1 && S2 && !prevS2) {
-        fsm.new_state = 11;
+        fsm.new_state = 51;
         fsm.tis_pause = fsm.tis;
         fsm.pause = 1;
       } else if(fsm.state == 2 && S2 && !prevS2) {
-        fsm.new_state = 12;
+        fsm.new_state = 52;
         fsm.tis_pause = fsm.tis;
         fsm.pause = 1;
       } else if(fsm.state == 3 && S2 && !prevS2) {
-        fsm.new_state = 13;
+        fsm.new_state = 53;
         fsm.tis_pause = fsm.tis;
         fsm.pause = 1;
       } else if(fsm.state == 4 && S2 && !prevS2) {
-        fsm.new_state = 14;
+        fsm.new_state = 54;
         fsm.tis_pause = fsm.tis;
         fsm.pause = 1;
       } else if(fsm.state == 5 && S2 && !prevS2) {
-        fsm.new_state = 15;
+        fsm.new_state = 55;
         fsm.tis_pause = fsm.tis;
         fsm.pause = 1;
       } else if(fsm.state == 6 && S2 && !prevS2) {
-        fsm.new_state = 16;
+        fsm.new_state = 56;
         fsm.tis_pause = fsm.tis;
         fsm.pause = 1;
 
       //Double Click 
-      }else if (fsm.state == 12 && S2 && !prevS2 && fsm.pause && fsm.tis < 500) {
+      }else if (fsm.state == 52 && S2 && !prevS2 && fsm.pause && fsm.tis < 500) {
         fsm.pause = 0;
         fsm.new_state = 1;
-      }else if (fsm.state == 13 && S2 && !prevS2 && fsm.pause && fsm.tis < 500) {
+      }else if (fsm.state == 53 && S2 && !prevS2 && fsm.pause && fsm.tis < 500) {
         fsm.pause = 0;
         fsm.new_state = 2;
-      }else if (fsm.state == 14 && S2 && !prevS2 && fsm.pause && fsm.tis < 500) {
+      }else if (fsm.state == 54 && S2 && !prevS2 && fsm.pause && fsm.tis < 500) {
         fsm.pause = 0;
         fsm.new_state = 3;
-      }else if (fsm.state == 15 && S2 && !prevS2 && fsm.pause && fsm.tis < 500) {
+      }else if (fsm.state == 55 && S2 && !prevS2 && fsm.pause && fsm.tis < 500) {
         fsm.pause = 0;
         fsm.new_state = 4;
-      }else if (fsm.state == 16 && S2 && !prevS2 && fsm.pause && fsm.tis < 500) {
+      }else if (fsm.state == 56 && S2 && !prevS2 && fsm.pause && fsm.tis < 500) {
         fsm.pause = 0;
         fsm.new_state = 5;
 
       //Config Mode
       } else if(fsm.state == 1 && S1 && prevS1 && fsm.tis >= 3000) {
-        fsm.new_state = 31; //modo config
+        fsm.new_state = 31; 
       } else if(fsm.state == 31 && S1 && !prevS1) {
         fsm.new_state = 32;
       } else if(fsm.state == 32 && S1 && !prevS1) {
@@ -221,6 +221,20 @@ void loop()
         fsm.new_state = 1;
         fsm.tis_pause = 0;  
       
+      //Piscar em Pausa vindo do doubleclick (Aceso)
+      } else if (fsm.state == 51 && fsm.tis > 1000 && fsm.pause) {
+        fsm.new_state = 21;
+      } else if (fsm.state == 52 && fsm.tis > 1000 && fsm.pause) {
+        fsm.new_state = 22;
+      } else if (fsm.state == 53 && fsm.tis > 1000 && fsm.pause) {
+        fsm.new_state = 23;
+      } else if (fsm.state == 54 && fsm.tis > 1000 && fsm.pause) {
+        fsm.new_state = 24;
+      } else if (fsm.state == 55 && fsm.tis > 1000 && fsm.pause) {
+        fsm.new_state = 25;
+      } else if (fsm.state == 56 && fsm.tis > 1000 && fsm.pause) {
+        fsm.new_state = 26;
+
       //Piscar em Pausa (Aceso)
       } else if (fsm.state == 11 && fsm.tis > 1000 && fsm.pause) {
         fsm.new_state = 21;
@@ -359,6 +373,19 @@ void loop()
     } else if (fsm.state == 43) { 
       LED_1 = 0, LED_2 = 0, LED_3 = 0, LED_4 = 0, LED_5 = 0, LED_6 = 0, LED_7 = 0;
 
+    //Piscar (Aceso)
+    } else if (fsm.state == 51) { 
+      LED_1 = 1, LED_2 = 1, LED_3 = 1, LED_4 = 1, LED_5 = 1, LED_6 = 1, LED_7 = 0;
+    } else if (fsm.state == 52) { 
+      LED_1 = 0, LED_2 = 1, LED_3 = 1, LED_4 = 1, LED_5 = 1, LED_6 = 1, LED_7 = 0;
+    } else if (fsm.state == 53) { 
+      LED_1 = 0, LED_2 = 0, LED_3 = 1, LED_4 = 1, LED_5 = 1, LED_6 = 1, LED_7 = 0;
+    } else if (fsm.state == 54) { 
+      LED_1 = 0, LED_2 = 0, LED_3 = 0, LED_4 = 1, LED_5 = 1, LED_6 = 1, LED_7 = 0;
+    } else if (fsm.state == 55) { 
+      LED_1 = 0, LED_2 = 0, LED_3 = 0, LED_4 = 0, LED_5 = 1, LED_6 = 1, LED_7 = 0;
+    } else if (fsm.state == 56) { 
+      LED_1 = 0, LED_2 = 0, LED_3 = 0, LED_4 = 0, LED_5 = 0, LED_6 = 1, LED_7 = 0;
 
     }
 
