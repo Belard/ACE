@@ -32,6 +32,14 @@ unsigned long tis_pause = 0;
 
 int end_cycle = 0;
 
+int interval_counter = 1;
+
+int blink_mode = 0;
+
+int finish_mode = 0;
+
+int timer = 0;
+
 // Output variables
 uint8_t LED_1, LED_2, LED_3, LED_4, LED_5, LED_6, LED_7;
 
@@ -103,6 +111,24 @@ void loop()
 
       S1 = !digitalRead(S1_pin);
       S2 = !digitalRead(S2_pin);
+
+      switch (interval_counter) {
+        case 0:
+          timer = 1000;
+          break;
+        case 1:
+          timer = 2000;
+          break;
+        case 2:
+          timer = 4000;
+          break;
+        case 3:
+          timer = 8000;
+          break;
+        default:
+          timer = 2000;
+          break;
+      }
 
       // FSM processing
 
@@ -182,6 +208,15 @@ void loop()
       } else if(( fsm.state == 43 || fsm.state == 42 || fsm.state == 41 || fsm.state == 33 || fsm.state == 32 || fsm.state == 31) && S1 && prevS1 && fsm.tis >= 3000) {
         fsm.new_state = 1;
 
+      //Config mode LED_1
+      } else if((fsm.state == 31 || fsm.state == 41) && S2 && !prevS2) {
+        interval_counter = interval_counter + 1;
+        if (interval_counter > 4) interval_counter = 0;
+      } else if((fsm.state == 32 || fsm.state == 42) && S2 && !prevS2) {
+        blink_mode++;
+        if (blink_mode > 3) blink_mode = 0;
+      } else if((fsm.state == 33 || fsm.state == 43) && S2 && !prevS2) {
+        finish_mode = !finish_mode;
       //Config Mode (aceso)
       } else if (fsm.state == 31 && fsm.tis > 1000 && !(S1 && prevS1))  {
         fsm.new_state = 41;
@@ -199,22 +234,22 @@ void loop()
         fsm.new_state = 33;
 
       // Passar ao próximo estado
-      } else if (fsm.state == 1 && (fsm.tis + fsm.tis_pause) >= 2000) {
+      } else if (fsm.state == 1 && (fsm.tis + fsm.tis_pause) >= timer) {
         fsm.new_state = 2;
         fsm.tis_pause = 0;
-      } else if (fsm.state == 2 && (fsm.tis + fsm.tis_pause) >= 2000) {
+      } else if (fsm.state == 2 && (fsm.tis + fsm.tis_pause) >= timer) {
         fsm.new_state = 3;
         fsm.tis_pause = 0;
-      } else if (fsm.state == 3 && (fsm.tis + fsm.tis_pause) >= 2000) {
+      } else if (fsm.state == 3 && (fsm.tis + fsm.tis_pause) >= timer) {
         fsm.new_state = 4;
         fsm.tis_pause = 0;
-      } else if (fsm.state == 4 && (fsm.tis + fsm.tis_pause) >= 2000) {
+      } else if (fsm.state == 4 && (fsm.tis + fsm.tis_pause) >= timer) {
         fsm.new_state = 5;
         fsm.tis_pause = 0;
-      } else if (fsm.state == 5 && (fsm.tis + fsm.tis_pause) >= 2000) {
+      } else if (fsm.state == 5 && (fsm.tis + fsm.tis_pause) >= timer) {
         fsm.new_state = 6;
         fsm.tis_pause = 0;
-      } else if (fsm.state == 6 && (fsm.tis + fsm.tis_pause) >= 2000) {
+      } else if (fsm.state == 6 && (fsm.tis + fsm.tis_pause) >= timer) {
         fsm.new_state = 7;
         fsm.tis_pause = 0;
       } else if (fsm.state == 7 && (fsm.tis + fsm.tis_pause) >= 500) {
@@ -406,7 +441,7 @@ void loop()
       Serial.print(S2);
 
       Serial.print(" fsm.state: ");
-      Serial.print(fsm.state);    
+      Serial.print(interval_counter);    
 
       Serial.print(" LED_1: ");
       Serial.print(LED_1);
