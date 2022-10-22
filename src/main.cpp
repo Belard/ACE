@@ -719,12 +719,21 @@ void loop()
     }
 
       // Set the outputs
-      digitalWrite(LED1_pin, LED_1);
-      digitalWrite(LED2_pin, LED_2);
-      digitalWrite(LED3_pin, LED_3);
-      digitalWrite(LED4_pin, LED_4);
-      digitalWrite(LED5_pin, LED_5);
-      digitalWrite(LED6_pin, LED_6);
+      if (blink_mode == 2 && !fsm.pause && fsm.state == 1) {
+        analogWrite(LED1_pin, LED_1 * 255 * ((fsm.tis + fsm.tis_pause) / timer));
+        Serial.print("\n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n ");
+      }
+      else {digitalWrite(LED1_pin, LED_1);}
+      if (blink_mode == 2 && !fsm.pause && fsm.state == 2) {analogWrite(LED2_pin, LED_2 * 255 * ((fsm.tis + fsm.tis_pause) / timer));}
+      else {digitalWrite(LED2_pin, LED_2);}
+      if (blink_mode == 2 && !fsm.pause && fsm.state == 3) {analogWrite(LED3_pin, LED_3 * 255 * ((fsm.tis + fsm.tis_pause) / timer));}
+      else {digitalWrite(LED3_pin, LED_3);}
+      if (blink_mode == 2 && !fsm.pause && fsm.state == 4) {analogWrite(LED4_pin, LED_4 * 255 * ((fsm.tis + fsm.tis_pause) / timer));}
+      else {digitalWrite(LED4_pin, LED_4);}
+      if (blink_mode == 2 && !fsm.pause && fsm.state == 5) {analogWrite(LED5_pin, LED_5 * 255 * ((fsm.tis + fsm.tis_pause) / timer));}
+      else {digitalWrite(LED5_pin, LED_5);}
+      if (blink_mode == 2 && !fsm.pause && fsm.state == 6) {analogWrite(LED6_pin, LED_6 * 255 * ((fsm.tis + fsm.tis_pause) / timer));}
+      else {digitalWrite(LED6_pin, LED_6);}
       digitalWrite(LED7_pin, LED_7);
 
       // Debug using the serial port
