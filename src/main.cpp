@@ -38,6 +38,8 @@ int blink_mode = 0;
 
 int finish_mode = 0;
 
+int flicker_counter = 0;
+
 int timer = 0;
 int timer_led_7 = 0;
 
@@ -240,14 +242,14 @@ void loop()
       } else if(( fsm.state == 43 || fsm.state == 42 || fsm.state == 41 || fsm.state == 33 || fsm.state == 32 || fsm.state == 31 || fsm.state == 431 || fsm.state == 421 || fsm.state == 411 || fsm.state == 331 || fsm.state == 321 || fsm.state == 311) && S1 && prevS1 && fsm.tis >= 3000) {
         fsm.new_state = 1;
 
-      //Config mode LED_1
-      } else if((fsm.state == 31 || fsm.state == 41) && S2 && !prevS2) {
+      //Config mode
+      } else if((fsm.state == 31 || fsm.state == 41 || fsm.state == 311 || fsm.state == 411) && S2 && !prevS2) {
         interval_counter = interval_counter + 1;
         if (interval_counter > 4) interval_counter = 0;
-      } else if((fsm.state == 32 || fsm.state == 42) && S2 && !prevS2) {
+      } else if((fsm.state == 32 || fsm.state == 42 || fsm.state == 321 || fsm.state == 421) && S2 && !prevS2) {
         blink_mode++;
         if (blink_mode > 3) blink_mode = 0;
-      } else if((fsm.state == 33 || fsm.state == 43) && S2 && !prevS2) {
+      } else if((fsm.state == 33 || fsm.state == 43 || fsm.state == 331 || fsm.state == 431) && S2 && !prevS2) {
         finish_mode = !finish_mode;
 
       //Config Mode (aceso)
@@ -256,14 +258,18 @@ void loop()
         led_7_counter++;
       } else if (fsm.state == 32 && fsm.tis > 1000 && !(S1 && prevS1))   {
         fsm.new_state = 42;
-      } else if (fsm.state == 33 && fsm.tis > 1000 && !(S1 && prevS1))   {
-        fsm.new_state = 43;
+      } else if (fsm.state == 33 && fsm.tis > 100 && !(S1 && prevS1) && finish_mode && flicker_counter > 10)   {
+        fsm.new_state = 431;
+        flicker_counter = 0;
+      } else if (fsm.state == 33 && fsm.tis > 100 && !(S1 && prevS1) && finish_mode)   {
+        fsm.new_state = 331;
+        flicker_counter ++;
       } else if (fsm.state == 31 && fsm.tis > 1000 && !(S1 && prevS1) && led_7_counter > (timer_led_7/1000))  {
         fsm.new_state = 411;
         led_7_counter = 0;
       } else if (fsm.state == 32 && fsm.tis > 1000 && !(S1 && prevS1))  {
         fsm.new_state = 421;
-      } else if (fsm.state == 33 && fsm.tis > 1000 && !(S1 && prevS1))  {
+      } else if (fsm.state == 33 && fsm.tis > 1000 && !(S1 && prevS1) && !finish_mode)  {
         fsm.new_state = 431;
 
       //Config Mode (apagado)
@@ -272,8 +278,12 @@ void loop()
         led_7_counter++;
       } else if (fsm.state == 42 && fsm.tis > 1000 && !(S1 && prevS1))  {
         fsm.new_state = 32;
-      } else if (fsm.state == 43 && fsm.tis > 1000 && !(S1 && prevS1))  {
-        fsm.new_state = 33;
+      } else if (fsm.state == 43 && fsm.tis > 100 && !(S1 && prevS1) && !finish_mode && flicker_counter > 10)  {
+        fsm.new_state = 331;
+        flicker_counter = 0;
+      } else if (fsm.state == 43 && fsm.tis > 100 && !(S1 && prevS1) && finish_mode)  {
+        fsm.new_state = 431;
+        flicker_counter ++;
       } else if (fsm.state == 41 && fsm.tis > 1000 && !(S1 && prevS1) && led_7_counter > (timer_led_7/1000))  {
         fsm.new_state = 311;
         led_7_counter = 0;
@@ -288,7 +298,13 @@ void loop()
         led_7_counter++;
       } else if (fsm.state == 321 && fsm.tis > 1000 && !(S1 && prevS1)) {
         fsm.new_state = 421;
-      } else if (fsm.state == 331 && fsm.tis > 1000 && !(S1 && prevS1)) {
+      } else if (fsm.state == 331 && fsm.tis > 100 && !(S1 && prevS1) && finish_mode && flicker_counter > 10)  {
+        fsm.new_state = 43;
+        flicker_counter = 0;
+      } else if (fsm.state == 331 && fsm.tis > 100 && !(S1 && prevS1) && finish_mode)  {
+        fsm.new_state = 33;
+        flicker_counter ++;
+      } else if (fsm.state == 331 && fsm.tis > 1000 && !(S1 && prevS1) && !finish_mode) {
         fsm.new_state = 431;
       } else if (fsm.state == 311 && fsm.tis > 1000 && !(S1 && prevS1) && led_7_counter > (timer_led_7/1000))  {
         fsm.new_state = 41;
@@ -304,7 +320,13 @@ void loop()
         led_7_counter++;
       } else if (fsm.state == 421 && fsm.tis > 1000 && !(S1 && prevS1)) {
         fsm.new_state = 321;
-      } else if (fsm.state == 431 && fsm.tis > 1000 && !(S1 && prevS1)) {
+      } else if (fsm.state == 431 && fsm.tis > 100 && !(S1 && prevS1) && finish_mode && flicker_counter > 10)  {
+        fsm.new_state = 33;
+        flicker_counter = 0;
+      } else if (fsm.state == 431 && fsm.tis > 100 && !(S1 && prevS1) && finish_mode)  {
+        fsm.new_state = 43;
+        flicker_counter ++;
+      } else if (fsm.state == 431 && fsm.tis > 1000 && !(S1 && prevS1) && !finish_mode) {
         fsm.new_state = 331;
       } else if (fsm.state == 411 && fsm.tis > 1000 && !(S1 && prevS1) && led_7_counter > (timer_led_7/1000))  {
         fsm.new_state = 31;
@@ -550,8 +572,11 @@ void loop()
       Serial.print(" S2: ");
       Serial.print(S2);
 
+      Serial.print(" finish: ");
+      Serial.print(finish_mode);
+
       Serial.print(" fsm.state: ");
-      Serial.print(finish_mode);    
+      Serial.print(fsm.state);    
 
       Serial.print(" LED_1: ");
       Serial.print(LED_1);
