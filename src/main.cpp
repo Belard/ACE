@@ -35,6 +35,7 @@ int end_cycle = 0;
 int interval_counter = 1;
 
 int blink_mode = 0;
+int blink_mode_counter = 0;
 
 int finish_mode = 0;
 
@@ -158,27 +159,27 @@ void loop()
         //Serial.print("\n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n ");
 
       // Ativar Pausa
-      } else if(fsm.state == 1 && S2 && !prevS2) {
+      } else if((fsm.state == 1 || fsm.state == 61) && S2 && !prevS2) {
         fsm.new_state = 51;
         fsm.tis_pause = fsm.tis;
         fsm.pause = 1;
-      } else if(fsm.state == 2 && S2 && !prevS2) {
+      } else if((fsm.state == 2 || fsm.state == 62) && S2 && !prevS2) {
         fsm.new_state = 52;
         fsm.tis_pause = fsm.tis;
         fsm.pause = 1;
-      } else if(fsm.state == 3 && S2 && !prevS2) {
+      } else if((fsm.state == 3 || fsm.state == 63) && S2 && !prevS2) {
         fsm.new_state = 53;
         fsm.tis_pause = fsm.tis;
         fsm.pause = 1;
-      } else if(fsm.state == 4 && S2 && !prevS2) {
+      } else if((fsm.state == 4 || fsm.state == 64) && S2 && !prevS2) {
         fsm.new_state = 54;
         fsm.tis_pause = fsm.tis;
         fsm.pause = 1;
-      } else if(fsm.state == 5 && S2 && !prevS2) {
+      } else if((fsm.state == 5 || fsm.state == 65) && S2 && !prevS2) {
         fsm.new_state = 55;
         fsm.tis_pause = fsm.tis;
         fsm.pause = 1;
-      } else if(fsm.state == 6 && S2 && !prevS2) {
+      } else if((fsm.state == 6 || fsm.state == 66) && S2 && !prevS2) {
         fsm.new_state = 56;
         fsm.tis_pause = fsm.tis;
         fsm.pause = 1;
@@ -248,7 +249,7 @@ void loop()
         if (interval_counter > 4) interval_counter = 0;
       } else if((fsm.state == 32 || fsm.state == 42 || fsm.state == 321 || fsm.state == 421) && S2 && !prevS2) {
         blink_mode++;
-        if (blink_mode > 3) blink_mode = 0;
+        if (blink_mode >= 3) blink_mode = 0;
       } else if((fsm.state == 33 || fsm.state == 43 || fsm.state == 331 || fsm.state == 431) && S2 && !prevS2) {
         finish_mode = !finish_mode;
 
@@ -336,38 +337,158 @@ void loop()
       } else if (fsm.state == 431 && fsm.tis > 1000 && !(S1 && prevS1))  {
         fsm.new_state = 33;
 
-      // Passar ao próximo estado
-      } else if (fsm.state == 1 && (fsm.tis + fsm.tis_pause) >= timer) {
+      // Passar ao próximo estado (blinkmode == 0)
+      } else if (fsm.state == 1 && (fsm.tis + fsm.tis_pause) >= timer && blink_mode == 0) {
         fsm.new_state = 2;
         fsm.tis_pause = 0;
-      } else if (fsm.state == 2 && (fsm.tis + fsm.tis_pause) >= timer) {
+      } else if (fsm.state == 2 && (fsm.tis + fsm.tis_pause) >= timer && blink_mode == 0) {
         fsm.new_state = 3;
         fsm.tis_pause = 0;
-      } else if (fsm.state == 3 && (fsm.tis + fsm.tis_pause) >= timer) {
+      } else if (fsm.state == 3 && (fsm.tis + fsm.tis_pause) >= timer && blink_mode == 0) {
         fsm.new_state = 4;
         fsm.tis_pause = 0;
-      } else if (fsm.state == 4 && (fsm.tis + fsm.tis_pause) >= timer) {
+      } else if (fsm.state == 4 && (fsm.tis + fsm.tis_pause) >= timer && blink_mode == 0) {
         fsm.new_state = 5;
         fsm.tis_pause = 0;
-      } else if (fsm.state == 5 && (fsm.tis + fsm.tis_pause) >= timer) {
+      } else if (fsm.state == 5 && (fsm.tis + fsm.tis_pause) >= timer && blink_mode == 0) {
         fsm.new_state = 6;
         fsm.tis_pause = 0;
-      } else if (fsm.state == 6 && (fsm.tis + fsm.tis_pause) >= timer && !finish_mode) {
+      } else if (fsm.state == 6 && (fsm.tis + fsm.tis_pause) >= timer && blink_mode == 0 && !finish_mode) {
         fsm.new_state = 7;
         fsm.tis_pause = 0;
-      } else if (fsm.state == 6 && (fsm.tis + fsm.tis_pause) >= timer && finish_mode) {
+      } else if (fsm.state == 6 && (fsm.tis + fsm.tis_pause) >= timer && blink_mode == 0 && finish_mode) {
         fsm.new_state = 71;
         fsm.tis_pause = 0;
-      } else if (fsm.state == 7 && (fsm.tis + fsm.tis_pause) >= 500) {
+      } else if (fsm.state == 7 && (fsm.tis + fsm.tis_pause) >= 500 && blink_mode == 0) {
         fsm.new_state = 1;
         fsm.tis_pause = 0;
-      } else if (fsm.state == 71 && (fsm.tis + fsm.tis_pause) >= 100) {
+      } else if (fsm.state == 71 && (fsm.tis + fsm.tis_pause) >= 100 && blink_mode == 0) {
         fsm.new_state = 72;
         fsm.tis_pause = 0;
-      } else if (fsm.state == 72 && (fsm.tis + fsm.tis_pause) >= 100) {
+      } else if (fsm.state == 72 && (fsm.tis + fsm.tis_pause) >= 100 && blink_mode == 0) {
         fsm.new_state = 1;
         fsm.tis_pause = 0;     
       
+      // Passar ao próximo estado (blinkmode == 1)
+
+      } else if (fsm.state == 1 && (fsm.tis + fsm.tis_pause) >= 100 && blink_mode == 1 && blink_mode_counter >= 9) {
+        fsm.new_state = 2;
+        fsm.tis_pause = 0;
+        blink_mode_counter = 0;
+      } else if (fsm.state == 1 && (fsm.tis + fsm.tis_pause) >= 100 && blink_mode == 1 && blink_mode_counter > 0) {
+        fsm.new_state = 61;
+        fsm.tis_pause = 0;
+        blink_mode_counter ++;
+      } else if (fsm.state == 1 && (fsm.tis + fsm.tis_pause) >= timer/2 && blink_mode == 1 && blink_mode_counter == 0) {
+        fsm.new_state = 61;
+        fsm.tis_pause = 0;
+        blink_mode_counter ++;
+      } else if (fsm.state == 2 && (fsm.tis + fsm.tis_pause) >= 100 && blink_mode == 1 && blink_mode_counter >= 9) {
+        fsm.new_state = 3;
+        fsm.tis_pause = 0;
+        blink_mode_counter = 0;
+      } else if (fsm.state == 2 && (fsm.tis + fsm.tis_pause) >= 100 && blink_mode == 1 && blink_mode_counter > 0) {
+        fsm.new_state = 62;
+        fsm.tis_pause = 0;
+        blink_mode_counter ++;
+      } else if (fsm.state == 2 && (fsm.tis + fsm.tis_pause) >= timer/2 && blink_mode == 1 && blink_mode_counter == 0) {
+        fsm.new_state = 62;
+        fsm.tis_pause = 0;
+        blink_mode_counter ++;
+      } else if (fsm.state == 3 && (fsm.tis + fsm.tis_pause) >= 100 && blink_mode == 1 && blink_mode_counter >= 9) {
+        fsm.new_state = 4;
+        fsm.tis_pause = 0;
+        blink_mode_counter = 0;
+      } else if (fsm.state == 3 && (fsm.tis + fsm.tis_pause) >= 100 && blink_mode == 1 && blink_mode_counter > 0) {
+        fsm.new_state = 63;
+        fsm.tis_pause = 0;
+        blink_mode_counter ++;
+      } else if (fsm.state == 3 && (fsm.tis + fsm.tis_pause) >= timer/2 && blink_mode == 1 && blink_mode_counter == 0) {
+        fsm.new_state = 63;
+        fsm.tis_pause = 0;
+        blink_mode_counter ++;
+      } else if (fsm.state == 4 && (fsm.tis + fsm.tis_pause) >= 100 && blink_mode == 1 && blink_mode_counter >= 9) {
+        fsm.new_state = 5;
+        fsm.tis_pause = 0;
+        blink_mode_counter = 0;
+      } else if (fsm.state == 4 && (fsm.tis + fsm.tis_pause) >= 100 && blink_mode == 1 && blink_mode_counter > 0) {
+        fsm.new_state = 64;
+        fsm.tis_pause = 0;
+        blink_mode_counter ++;
+      } else if (fsm.state == 4 && (fsm.tis + fsm.tis_pause) >= timer/2 && blink_mode == 1 && blink_mode_counter == 0) {
+        fsm.new_state = 64;
+        fsm.tis_pause = 0;
+        blink_mode_counter ++;
+      } else if (fsm.state == 5 && (fsm.tis + fsm.tis_pause) >= 100 && blink_mode == 1 && blink_mode_counter >= 9) {
+        fsm.new_state = 6;
+        fsm.tis_pause = 0;
+        blink_mode_counter = 0;
+      } else if (fsm.state == 5 && (fsm.tis + fsm.tis_pause) >= 100 && blink_mode == 1 && blink_mode_counter > 0) {
+        fsm.new_state = 65;
+        fsm.tis_pause = 0;
+        blink_mode_counter ++;
+      } else if (fsm.state == 5 && (fsm.tis + fsm.tis_pause) >= timer/2 && blink_mode == 1 && blink_mode_counter == 0) {
+        fsm.new_state = 65;
+        fsm.tis_pause = 0;
+        blink_mode_counter ++;
+      } else if (fsm.state == 6 && (fsm.tis + fsm.tis_pause) >= timer/2 && blink_mode == 1 && blink_mode_counter == 0) {
+        fsm.new_state = 66;
+        fsm.tis_pause = 0;
+        blink_mode_counter ++;
+      } else if (fsm.state == 6 && (fsm.tis + fsm.tis_pause) >= 100 && blink_mode == 1 && blink_mode_counter >= 9 && !finish_mode) {
+        fsm.new_state = 7; //ver aqui
+        fsm.tis_pause = 0;
+        blink_mode_counter = 0;
+      } else if (fsm.state == 6 && (fsm.tis + fsm.tis_pause) >= 100 && blink_mode == 1 && blink_mode_counter >= 9 && finish_mode) {
+        fsm.new_state = 71; //ver aqui
+        fsm.tis_pause = 0;
+        blink_mode_counter = 0;
+      } else if (fsm.state == 6 && (fsm.tis + fsm.tis_pause) >= 100 && blink_mode == 1 && blink_mode_counter > 0) {
+        fsm.new_state = 66;
+        fsm.tis_pause = 0;
+        blink_mode_counter ++;
+      } else if (fsm.state == 7 && (fsm.tis + fsm.tis_pause) >= 500 && blink_mode == 1) {
+        fsm.new_state = 1;
+        fsm.tis_pause = 0;
+      } else if (fsm.state == 71 && (fsm.tis + fsm.tis_pause) >= 100 && blink_mode == 1) {
+        fsm.new_state = 72;
+        fsm.tis_pause = 0;
+      } else if (fsm.state == 72 && (fsm.tis + fsm.tis_pause) >= 100 && blink_mode == 1) {
+        fsm.new_state = 1;
+        fsm.tis_pause = 0;
+
+      // Passar ao próximo estado (blinkmode == 2)
+      } else if (fsm.state == 1 && (fsm.tis + fsm.tis_pause) >= timer && blink_mode == 2) {
+        fsm.new_state = 2;
+        fsm.tis_pause = 0;
+      } else if (fsm.state == 2 && (fsm.tis + fsm.tis_pause) >= timer && blink_mode == 2) {
+        fsm.new_state = 3;
+        fsm.tis_pause = 0;
+      } else if (fsm.state == 3 && (fsm.tis + fsm.tis_pause) >= timer && blink_mode == 2) {
+        fsm.new_state = 4;
+        fsm.tis_pause = 0;
+      } else if (fsm.state == 4 && (fsm.tis + fsm.tis_pause) >= timer && blink_mode == 2) {
+        fsm.new_state = 5;
+        fsm.tis_pause = 0;
+      } else if (fsm.state == 5 && (fsm.tis + fsm.tis_pause) >= timer && blink_mode == 2) {
+        fsm.new_state = 6;
+        fsm.tis_pause = 0;
+      } else if (fsm.state == 6 && (fsm.tis + fsm.tis_pause) >= timer && blink_mode == 2 && !finish_mode) {
+        fsm.new_state = 7;
+        fsm.tis_pause = 0;
+      } else if (fsm.state == 6 && (fsm.tis + fsm.tis_pause) >= timer && blink_mode == 2 && finish_mode) {
+        fsm.new_state = 71;
+        fsm.tis_pause = 0;
+      } else if (fsm.state == 7 && (fsm.tis + fsm.tis_pause) >= 500 && blink_mode == 2) {
+        fsm.new_state = 1;
+        fsm.tis_pause = 0;
+      } else if (fsm.state == 71 && (fsm.tis + fsm.tis_pause) >= 100 && blink_mode == 2) {
+        fsm.new_state = 72;
+        fsm.tis_pause = 0;
+      } else if (fsm.state == 72 && (fsm.tis + fsm.tis_pause) >= 100 && blink_mode == 2) {
+        fsm.new_state = 1;
+        fsm.tis_pause = 0;         
+
       //Piscar em Pausa vindo do doubleclick (Aceso)
       } else if (fsm.state == 51 && fsm.tis > 1000 && fsm.pause) {
         fsm.new_state = 21;
@@ -449,7 +570,34 @@ void loop()
       }else if (fsm.state == 26 && S2 && !prevS2 && fsm.pause) {
         fsm.pause = 0;
         fsm.new_state = 6;
+
+      // Piscar passar ao próximo estado (blinkmode == 1)
+      } else if (fsm.state == 61 && (fsm.tis + fsm.tis_pause) >= 100 && blink_mode == 1) {
+        fsm.new_state = 1;
+        fsm.tis_pause = 0;
+        blink_mode_counter ++;
+      } else if (fsm.state == 62 && (fsm.tis + fsm.tis_pause) >= 100 && blink_mode == 1) {
+        fsm.new_state = 2;
+        fsm.tis_pause = 0;
+        blink_mode_counter ++;
+      } else if (fsm.state == 63 && (fsm.tis + fsm.tis_pause) >= 100 && blink_mode == 1) {
+        fsm.new_state = 3;
+        fsm.tis_pause = 0;
+        blink_mode_counter ++;
+      } else if (fsm.state == 64 && (fsm.tis + fsm.tis_pause) >= 100 && blink_mode == 1) {
+        fsm.new_state = 4;
+        fsm.tis_pause = 0;
+        blink_mode_counter ++;
+      } else if (fsm.state == 65 && (fsm.tis + fsm.tis_pause) >= 100 && blink_mode == 1) {
+        fsm.new_state = 5;
+        fsm.tis_pause = 0;
+        blink_mode_counter ++;
+      } else if (fsm.state == 66 && (fsm.tis + fsm.tis_pause) >= 100 && blink_mode == 1) {
+        fsm.new_state = 6;
+        fsm.tis_pause = 0;
+        blink_mode_counter ++;
       }
+
   set_state(fsm, fsm.new_state);
 
 //LED's em cada Estado
@@ -554,6 +702,20 @@ void loop()
     } else if (fsm.state == 56) { 
       LED_1 = 0, LED_2 = 0, LED_3 = 0, LED_4 = 0, LED_5 = 0, LED_6 = 1, LED_7 = 0;
 
+    //Piscar (Desligado) blink_mode==1
+    } else if (fsm.state == 61) { 
+      LED_1 = 0, LED_2 = 1, LED_3 = 1, LED_4 = 1, LED_5 = 1, LED_6 = 1, LED_7 = 0;
+    } else if (fsm.state == 62) { 
+      LED_1 = 0, LED_2 = 0, LED_3 = 1, LED_4 = 1, LED_5 = 1, LED_6 = 1, LED_7 = 0;
+    } else if (fsm.state == 63) { 
+      LED_1 = 0, LED_2 = 0, LED_3 = 0, LED_4 = 1, LED_5 = 1, LED_6 = 1, LED_7 = 0;
+    } else if (fsm.state == 64) { 
+      LED_1 = 0, LED_2 = 0, LED_3 = 0, LED_4 = 0, LED_5 = 1, LED_6 = 1, LED_7 = 0;
+    } else if (fsm.state == 65) { 
+      LED_1 = 0, LED_2 = 0, LED_3 = 0, LED_4 = 0, LED_5 = 0, LED_6 = 1, LED_7 = 0;
+    } else if (fsm.state == 66) { 
+      LED_1 = 0, LED_2 = 0, LED_3 = 0, LED_4 = 0, LED_5 = 0, LED_6 = 0, LED_7 = 0;
+
     }
 
       // Set the outputs
@@ -572,8 +734,8 @@ void loop()
       Serial.print(" S2: ");
       Serial.print(S2);
 
-      Serial.print(" finish: ");
-      Serial.print(finish_mode);
+      Serial.print(" blink: ");
+      Serial.print(blink_mode);
 
       Serial.print(" fsm.state: ");
       Serial.print(fsm.state);    
