@@ -206,7 +206,7 @@ void loop()
         fsm.new_state = 31; 
       } else if(fsm.state == 31 && S1 && !prevS1) {
         led_7_counter = 0;        
-        fsm.new_state = 32;
+        fsm.new_state = 321;
       } else if(fsm.state == 32 && S1 && !prevS1) {
         led_7_counter = 0;        
         fsm.new_state = 33;
@@ -224,7 +224,7 @@ void loop()
         fsm.new_state = 41;
       } else if(fsm.state == 311 && S1 && !prevS1) {
         led_7_counter = 0;        
-        fsm.new_state = 32;
+        fsm.new_state = 321;
       } else if(fsm.state == 321 && S1 && !prevS1) {
         led_7_counter = 0;        
         fsm.new_state = 33;
@@ -254,7 +254,7 @@ void loop()
         finish_mode = !finish_mode;
 
       //Config Mode (aceso)
-      } else if (fsm.state == 31 && fsm.tis > 1000 && !(S1 && prevS1) && led_7_counter <= (timer_led_7/1000))  {
+      } else if (fsm.state == 31 && fsm.tis > 1000 && !(S1 && prevS1) && led_7_counter < ((timer_led_7/1000) -1))  {
         fsm.new_state = 41;
         led_7_counter++;
       } else if (fsm.state == 32 && fsm.tis > 1000 && !(S1 && prevS1))   {
@@ -265,7 +265,7 @@ void loop()
       } else if (fsm.state == 33 && fsm.tis > 100 && !(S1 && prevS1) && finish_mode)   {
         fsm.new_state = 331;
         flicker_counter ++;
-      } else if (fsm.state == 31 && fsm.tis > 1000 && !(S1 && prevS1) && led_7_counter > (timer_led_7/1000))  {
+      } else if (fsm.state == 31 && fsm.tis > 1000 && !(S1 && prevS1) && led_7_counter == ((timer_led_7/1000) -1))  {
         fsm.new_state = 411;
         led_7_counter = 0;
       } else if (fsm.state == 32 && fsm.tis > 1000 && !(S1 && prevS1))  {
@@ -274,18 +274,18 @@ void loop()
         fsm.new_state = 431;
 
       //Config Mode (apagado)
-      } else if (fsm.state == 41 && fsm.tis > 1000 && !(S1 && prevS1) && led_7_counter <= (timer_led_7/1000)) {
+      } else if (fsm.state == 41 && fsm.tis > 1000 && !(S1 && prevS1) && led_7_counter < ((timer_led_7/1000) -1)) {
         fsm.new_state = 31;
         led_7_counter++;
-      } else if (fsm.state == 42 && fsm.tis > 1000 && !(S1 && prevS1))  {
-        fsm.new_state = 32;
+      } else if (fsm.state == 42 && fsm.tis > 1000 && !(S1 && prevS1) && blink_mode == 2)  {
+        fsm.new_state = 321;
       } else if (fsm.state == 43 && fsm.tis > 100 && !(S1 && prevS1) && !finish_mode && flicker_counter > 10)  {
         fsm.new_state = 331;
         flicker_counter = 0;
       } else if (fsm.state == 43 && fsm.tis > 100 && !(S1 && prevS1) && finish_mode)  {
         fsm.new_state = 431;
         flicker_counter ++;
-      } else if (fsm.state == 41 && fsm.tis > 1000 && !(S1 && prevS1) && led_7_counter > (timer_led_7/1000))  {
+      } else if (fsm.state == 41 && fsm.tis > 1000 && !(S1 && prevS1) && led_7_counter == ((timer_led_7/1000) -1))  {
         fsm.new_state = 311;
         led_7_counter = 0;
       } else if (fsm.state == 42 && fsm.tis > 1000 && !(S1 && prevS1))  {
@@ -294,11 +294,11 @@ void loop()
         fsm.new_state = 331;
 
       //Config Mode (aceso) LED_7_ON
-      } else if (fsm.state == 311 && fsm.tis > 1000 && !(S1 && prevS1) && led_7_counter <= (timer_led_7/1000)) {
+      } else if (fsm.state == 311 && fsm.tis > 1000 && !(S1 && prevS1) && led_7_counter < ((timer_led_7/1000) -1)) {
         fsm.new_state = 411;
         led_7_counter++;
-      } else if (fsm.state == 321 && fsm.tis > 1000 && !(S1 && prevS1)) {
-        fsm.new_state = 421;
+      } else if (fsm.state == 321 && fsm.tis > 1000 && !(S1 && prevS1) && blink_mode == 2) {
+        fsm.new_state = 42;
       } else if (fsm.state == 331 && fsm.tis > 100 && !(S1 && prevS1) && finish_mode && flicker_counter > 10)  {
         fsm.new_state = 43;
         flicker_counter = 0;
@@ -307,7 +307,7 @@ void loop()
         flicker_counter ++;
       } else if (fsm.state == 331 && fsm.tis > 1000 && !(S1 && prevS1) && !finish_mode) {
         fsm.new_state = 431;
-      } else if (fsm.state == 311 && fsm.tis > 1000 && !(S1 && prevS1) && led_7_counter > (timer_led_7/1000))  {
+      } else if (fsm.state == 311 && fsm.tis > 1000 && !(S1 && prevS1) && led_7_counter == ((timer_led_7/1000) -1))  {
         fsm.new_state = 41;
         led_7_counter = 0;
       } else if (fsm.state == 321 && fsm.tis > 1000 && !(S1 && prevS1))  {
@@ -316,7 +316,7 @@ void loop()
         fsm.new_state = 43;
 
       //Config Mode (apagado) LED_7_ON
-      } else if (fsm.state == 411 && fsm.tis > 1000 && !(S1 && prevS1) && led_7_counter <= (timer_led_7/1000)) {
+      } else if (fsm.state == 411 && fsm.tis > 1000 && !(S1 && prevS1) && led_7_counter < ((timer_led_7/1000) -1)) {
         fsm.new_state = 311;
         led_7_counter++;
       } else if (fsm.state == 421 && fsm.tis > 1000 && !(S1 && prevS1)) {
@@ -329,7 +329,7 @@ void loop()
         flicker_counter ++;
       } else if (fsm.state == 431 && fsm.tis > 1000 && !(S1 && prevS1) && !finish_mode) {
         fsm.new_state = 331;
-      } else if (fsm.state == 411 && fsm.tis > 1000 && !(S1 && prevS1) && led_7_counter > (timer_led_7/1000))  {
+      } else if (fsm.state == 411 && fsm.tis > 1000 && !(S1 && prevS1) && led_7_counter == ((timer_led_7/1000) -1))  {
         fsm.new_state = 31;
         led_7_counter = 0;
       } else if (fsm.state == 421 && fsm.tis > 1000 && !(S1 && prevS1))  {
@@ -718,23 +718,27 @@ void loop()
 
     }
 
+
+    float timer_float = timer;
+    
+    float analog_timer = (1 - (fsm.tis + tis_pause) / timer_float);
+  
+
       // Set the outputs
-      if (blink_mode == 2 && !fsm.pause && fsm.state == 1) {
-        analogWrite(LED1_pin, LED_1 * 255 * ((fsm.tis + fsm.tis_pause) / timer));
-        Serial.print("\n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n \n ");
-      }
-      else {digitalWrite(LED1_pin, LED_1);}
-      if (blink_mode == 2 && !fsm.pause && fsm.state == 2) {analogWrite(LED2_pin, LED_2 * 255 * ((fsm.tis + fsm.tis_pause) / timer));}
-      else {digitalWrite(LED2_pin, LED_2);}
-      if (blink_mode == 2 && !fsm.pause && fsm.state == 3) {analogWrite(LED3_pin, LED_3 * 255 * ((fsm.tis + fsm.tis_pause) / timer));}
-      else {digitalWrite(LED3_pin, LED_3);}
-      if (blink_mode == 2 && !fsm.pause && fsm.state == 4) {analogWrite(LED4_pin, LED_4 * 255 * ((fsm.tis + fsm.tis_pause) / timer));}
-      else {digitalWrite(LED4_pin, LED_4);}
-      if (blink_mode == 2 && !fsm.pause && fsm.state == 5) {analogWrite(LED5_pin, LED_5 * 255 * ((fsm.tis + fsm.tis_pause) / timer));}
-      else {digitalWrite(LED5_pin, LED_5);}
-      if (blink_mode == 2 && !fsm.pause && fsm.state == 6) {analogWrite(LED6_pin, LED_6 * 255 * ((fsm.tis + fsm.tis_pause) / timer));}
-      else {digitalWrite(LED6_pin, LED_6);}
-      digitalWrite(LED7_pin, LED_7);
+      if (blink_mode == 2 && !fsm.pause && fsm.state == 1) {analogWrite(LED1_pin, LED_1 * 255 * analog_timer);}
+      else {analogWrite(LED1_pin, LED_1 * 255);}
+      if (blink_mode == 2 && !fsm.pause && fsm.state == 2) {analogWrite(LED2_pin, LED_2 * 255 * analog_timer);}
+      else {analogWrite(LED2_pin, LED_2 * 255);}
+      if (blink_mode == 2 && !fsm.pause && fsm.state == 3) {analogWrite(LED3_pin, LED_3 * 255 * analog_timer);}
+      else {analogWrite(LED3_pin, LED_3 * 255);}
+      if (blink_mode == 2 && !fsm.pause && fsm.state == 4) {analogWrite(LED4_pin, LED_4 * 255 * analog_timer);}
+      else {analogWrite(LED4_pin, LED_4 * 255);}
+      if (blink_mode == 2 && !fsm.pause && fsm.state == 5) {analogWrite(LED5_pin, LED_5 * 255 * analog_timer);}
+      else {analogWrite(LED5_pin, LED_5 * 255);}
+      if (blink_mode == 2 && !fsm.pause && fsm.state == 6) {analogWrite(LED6_pin, LED_6 * 255 * analog_timer);}
+      else {analogWrite(LED6_pin, LED_6 * 255);}
+      if (blink_mode == 2 && !fsm.pause && fsm.state == 321) {analogWrite(LED7_pin, LED_7 * 255 * (1 - ((fsm.tis + tis_pause) / 1000.0f)));}
+      else {analogWrite(LED7_pin, LED_7 * 255);}
 
       // Debug using the serial port
       Serial.print("S1: ");
@@ -748,6 +752,15 @@ void loop()
 
       Serial.print(" fsm.state: ");
       Serial.print(fsm.state);    
+
+      Serial.print(" TIMER: ");
+      Serial.print(timer);
+
+      Serial.print(" tis: ");
+      Serial.print(fsm.tis + fsm.tis_pause);
+
+      Serial.print(" LED: ");
+      Serial.print(analog_timer);
 
       Serial.print(" LED_1: ");
       Serial.print(LED_1);
