@@ -203,7 +203,8 @@ void loop()
 
       //Config Mode
       } else if(fsm.state == 1 && S1 && prevS1 && fsm.tis >= 3000) {
-        fsm.new_state = 31; 
+        fsm.new_state = 31;
+        blink_mode_counter = 0; 
       } else if(fsm.state == 31 && S1 && !prevS1) {
         led_7_counter = 0;        
         fsm.new_state = 321;
@@ -242,6 +243,7 @@ void loop()
         fsm.new_state = 41;
       } else if(( fsm.state == 43 || fsm.state == 42 || fsm.state == 41 || fsm.state == 33 || fsm.state == 32 || fsm.state == 31 || fsm.state == 431 || fsm.state == 421 || fsm.state == 411 || fsm.state == 331 || fsm.state == 321 || fsm.state == 311) && S1 && prevS1 && fsm.tis >= 3000) {
         fsm.new_state = 1;
+        blink_mode_counter = 0;
 
       //Config mode
       } else if((fsm.state == 31 || fsm.state == 41 || fsm.state == 311 || fsm.state == 411) && S2 && !prevS2) {
@@ -268,8 +270,15 @@ void loop()
       } else if (fsm.state == 31 && fsm.tis > 1000 && !(S1 && prevS1) && led_7_counter == ((timer_led_7/1000) -1))  {
         fsm.new_state = 411;
         led_7_counter = 0;
-      } else if (fsm.state == 32 && fsm.tis > 1000 && !(S1 && prevS1))  {
+      } else if (fsm.state == 32 && fsm.tis > 500 && !(S1 && prevS1) && blink_mode == 1 && blink_mode_counter == 0)  {
+        fsm.new_state = 321;
+        blink_mode_counter ++;
+      } else if (fsm.state == 32 && fsm.tis > 100 && !(S1 && prevS1) && blink_mode == 1 && blink_mode_counter >= 4)  {
         fsm.new_state = 421;
+        blink_mode_counter = 0;
+      } else if (fsm.state == 32 && fsm.tis > 100 && !(S1 && prevS1) && blink_mode == 1 && blink_mode_counter > 0)  {
+        fsm.new_state = 321;
+        blink_mode_counter ++;
       } else if (fsm.state == 33 && fsm.tis > 1000 && !(S1 && prevS1) && !finish_mode)  {
         fsm.new_state = 431;
 
@@ -277,6 +286,8 @@ void loop()
       } else if (fsm.state == 41 && fsm.tis > 1000 && !(S1 && prevS1) && led_7_counter < ((timer_led_7/1000) -1)) {
         fsm.new_state = 31;
         led_7_counter++;
+      } else if (fsm.state == 42 && fsm.tis > 1000 && !(S1 && prevS1) && blink_mode == 0)  {
+        fsm.new_state = 321;
       } else if (fsm.state == 42 && fsm.tis > 1000 && !(S1 && prevS1) && blink_mode == 2)  {
         fsm.new_state = 321;
       } else if (fsm.state == 43 && fsm.tis > 100 && !(S1 && prevS1) && !finish_mode && flicker_counter > 10)  {
@@ -288,8 +299,14 @@ void loop()
       } else if (fsm.state == 41 && fsm.tis > 1000 && !(S1 && prevS1) && led_7_counter == ((timer_led_7/1000) -1))  {
         fsm.new_state = 311;
         led_7_counter = 0;
-      } else if (fsm.state == 42 && fsm.tis > 1000 && !(S1 && prevS1))  {
+      } else if (fsm.state == 42 && fsm.tis > 1000 && !(S1 && prevS1) && blink_mode == 1)  {
         fsm.new_state = 321;
+      // } else if (fsm.state == 42 && fsm.tis > 100 && !(S1 && prevS1) && blink_mode == 1 && blink_mode_counter >= 4)  {
+      //   fsm.new_state = 321;
+      //   blink_mode_counter = 0;
+      // } else if (fsm.state == 42 && fsm.tis > 100 && !(S1 && prevS1) && blink_mode == 1 && blink_mode_counter > 0)  {
+      //   fsm.new_state = 421;
+      //   blink_mode_counter ++;
       } else if (fsm.state == 43 && fsm.tis > 1000 && !(S1 && prevS1))  {
         fsm.new_state = 331;
 
@@ -297,6 +314,8 @@ void loop()
       } else if (fsm.state == 311 && fsm.tis > 1000 && !(S1 && prevS1) && led_7_counter < ((timer_led_7/1000) -1)) {
         fsm.new_state = 411;
         led_7_counter++;
+      } else if (fsm.state == 321 && fsm.tis > 1000 && !(S1 && prevS1) && blink_mode == 0)  {
+        fsm.new_state = 42;
       } else if (fsm.state == 321 && fsm.tis > 1000 && !(S1 && prevS1) && blink_mode == 2) {
         fsm.new_state = 42;
       } else if (fsm.state == 331 && fsm.tis > 100 && !(S1 && prevS1) && finish_mode && flicker_counter > 10)  {
@@ -310,8 +329,15 @@ void loop()
       } else if (fsm.state == 311 && fsm.tis > 1000 && !(S1 && prevS1) && led_7_counter == ((timer_led_7/1000) -1))  {
         fsm.new_state = 41;
         led_7_counter = 0;
-      } else if (fsm.state == 321 && fsm.tis > 1000 && !(S1 && prevS1))  {
+      } else if (fsm.state == 321 && fsm.tis > 500 && !(S1 && prevS1) && blink_mode == 1 && blink_mode_counter == 0)  {
+        fsm.new_state = 32;
+        blink_mode_counter ++;
+      } else if (fsm.state == 321 && fsm.tis > 100 && !(S1 && prevS1) && blink_mode == 1 && blink_mode_counter >= 4)  {
         fsm.new_state = 42;
+        blink_mode_counter = 0;
+      } else if (fsm.state == 321 && fsm.tis > 100 && !(S1 && prevS1) && blink_mode == 1 && blink_mode_counter > 0)  {
+        fsm.new_state = 32;
+        blink_mode_counter ++;
       } else if (fsm.state == 331 && fsm.tis > 1000 && !(S1 && prevS1))  {
         fsm.new_state = 43;
 
@@ -319,8 +345,6 @@ void loop()
       } else if (fsm.state == 411 && fsm.tis > 1000 && !(S1 && prevS1) && led_7_counter < ((timer_led_7/1000) -1)) {
         fsm.new_state = 311;
         led_7_counter++;
-      } else if (fsm.state == 421 && fsm.tis > 1000 && !(S1 && prevS1)) {
-        fsm.new_state = 321;
       } else if (fsm.state == 431 && fsm.tis > 100 && !(S1 && prevS1) && finish_mode && flicker_counter > 10)  {
         fsm.new_state = 33;
         flicker_counter = 0;
@@ -332,8 +356,17 @@ void loop()
       } else if (fsm.state == 411 && fsm.tis > 1000 && !(S1 && prevS1) && led_7_counter == ((timer_led_7/1000) -1))  {
         fsm.new_state = 31;
         led_7_counter = 0;
-      } else if (fsm.state == 421 && fsm.tis > 1000 && !(S1 && prevS1))  {
+      } else if (fsm.state == 421 && fsm.tis > 500 && !(S1 && prevS1) && blink_mode == 1 && blink_mode_counter == 0)  {
+        fsm.new_state = 42;
+        blink_mode_counter ++;
+      } else if (fsm.state == 421 && fsm.tis > 100 && !(S1 && prevS1) && blink_mode == 1 && blink_mode_counter >= 4)  {
         fsm.new_state = 32;
+        blink_mode_counter = 0;
+      } else if (fsm.state == 421 && fsm.tis > 100 && !(S1 && prevS1) && blink_mode == 1 && blink_mode_counter > 0)  {
+        fsm.new_state = 42;
+        blink_mode_counter ++;
+      } else if (fsm.state == 421 && fsm.tis > 1000 && !(S1 && prevS1)) {
+        fsm.new_state = 321;
       } else if (fsm.state == 431 && fsm.tis > 1000 && !(S1 && prevS1))  {
         fsm.new_state = 33;
 
