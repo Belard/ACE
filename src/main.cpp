@@ -236,7 +236,7 @@ void loop()
       //Config mode
       } else if((fsm.state == 31 || fsm.state == 41 || fsm.state == 311 || fsm.state == 411) && S2 && !prevS2) {
         interval_counter = interval_counter + 1;
-        if (interval_counter > 4) interval_counter = 0;
+        if (interval_counter >= 3) interval_counter = 0;
       } else if((fsm.state == 32 || fsm.state == 42 || fsm.state == 321 || fsm.state == 421) && S2 && !prevS2) {
         blink_mode++;
         if (blink_mode >= 3) blink_mode = 0;
